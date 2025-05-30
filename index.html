@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+mi<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -158,6 +158,87 @@ function colocarOperaciones() {
 
 generarLineasTiempo();
 colocarOperaciones();
+
+</script>
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script>
+function habilitarDrag() {
+  $('.op').draggable({
+    containment: 'parent',
+    axis: 'x',
+    stop: function (event, ui) {
+      const $this = $(this);
+      const nuevaPos = ui.position.left;
+      const ordenId = $this.data('orden');
+      const centro = $this.parent().prev('.centro-label').text();
+      const duracion = parseInt($this.width());
+      
+      // Reprogramar esta operación
+      reprogramarOrdenDesde(ordenId, centro, nuevaPos);
+    }
+  });
+}
+
+function reprogramarOrdenDesde(ordenId, centroInicio, nuevaHoraMin) {
+  const orden = ordenes.find(o => o.id == ordenId);
+  if (!orden) return;
+
+  let actualizar = false;
+  let tiempoActual = nuevaHoraMin;
+
+  orden.operaciones.forEach(op => {
+    if (op.centro === centroInicio) {
+      actualizar = true;
+    }
+
+    if (actualizar) {
+      op._inicio = tiempoActual;
+
+      // Actualiza el bloque visual
+      const $bloque = $(`.op[data-orden="${ordenId}"]`).filter(function () {
+        return $(this).parent().prev('.centro-label').text() === op.centro;
+      });
+
+      $bloque.css('left', `${tiempoActual}px`);
+      tiempoActual += op.duracion;
+    }
+  });
+
+  evitarSolapes(ordenId);
+}
+
+function evitarSolapes(ordenId) {
+  // Verifica solo dentro del mismo centro y misma orden
+  const $bloques = $(`.op[data-orden="${ordenId}"]`);
+  $bloques.removeClass('conflicto');
+
+  $bloques.each(function (i, el1) {
+    const $el1 = $(el1);
+    const l1 = $el1.position().left;
+    const r1 = l1 + $el1.outerWidth();
+    const centro1 = $el1.parent().prev('.centro-label').text();
+
+    $bloques.each(function (j, el2) {
+      if (i === j) return;
+      const $el2 = $(el2);
+      const l2 = $el2.position().left;
+      const r2 = l2 + $el2.outerWidth();
+      const centro2 = $el2.parent().prev('.centro-label').text();
+
+      if (centro1 === centro2 && l1 < r2 && r1 > l2) {
+        $el1.addClass('conflicto');
+        $el2.addClass('conflicto');
+      }
+    });
+  });
+}
+
+// Activar
+$(function () {
+  habilitarDrag();
+});
+
 </script>
 </body>
 </html>
