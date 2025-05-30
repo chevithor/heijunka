@@ -77,7 +77,7 @@
 
 <script>
 const centros = ['Corte', 'Soldadura', 'Pintura'];
-const baseDate = new Date(2025, 4, 29, 6, 0); // 06:00 hora local (no UTC)
+const baseDate = new Date(2025, 4, 29, 6, 30); // 06:30 hora local (no UTC)
 
 const ordenes = [
   {
@@ -85,7 +85,7 @@ const ordenes = [
     parte: 'PZA-A',
     cantidad: 100,
     operaciones: [
-      { centro: 'Corte', duracion: 60, horaInicio: '06:30' },
+      { centro: 'Corte', duracion: 60, horaInicio: '09:30' },
       { centro: 'Soldadura', duracion: 90 },
       { centro: 'Pintura', duracion: 45 }
     ]
@@ -95,7 +95,7 @@ const ordenes = [
     parte: 'PZA-B',
     cantidad: 80,
     operaciones: [
-      { centro: 'Corte', duracion: 45, horaInicio: '07:30' },
+      { centro: 'Corte', duracion: 45, horaInicio: '13:30' },
       { centro: 'Soldadura', duracion: 60 }
     ]
   }
