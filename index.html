@@ -2,51 +2,60 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Heijunka Timeline Horizontal</title>
+  <title>Heijunka por Centros</title>
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 20px;
-      overflow-x: auto;
-    }
+    body { font-family: sans-serif; margin: 0; padding: 10px; overflow-x: auto; }
+    .gantt { position: relative; width: 2880px; }
 
-    .timeline-container {
+    .centro {
       position: relative;
-      width: 2880px; /* 48h x 60min */
-      height: 200px;
-      border-top: 2px solid #000;
-      background: #f0f0f0;
+      height: 100px;
+      border-bottom: 1px solid #aaa;
+      margin-bottom: 10px;
     }
 
-    .orden {
+    .centro-label {
       position: absolute;
-      top: 50px;
+      left: 0;
+      top: 0;
+      width: 80px;
+      height: 100%;
+      background: #ddd;
+      writing-mode: vertical-rl;
+      text-align: center;
+      font-weight: bold;
+      padding: 5px;
+      box-sizing: border-box;
+    }
+
+    .timeline {
+      margin-left: 80px;
+      height: 100%;
+      position: relative;
+      background: #f5f5f5;
+    }
+
+    .op {
+      position: absolute;
       height: 80px;
-      background: #4CAF50;
-      color: #fff;
+      background: #2196f3;
+      color: white;
       border-radius: 4px;
       padding: 4px;
       box-sizing: border-box;
-      cursor: move;
+      font-size: 12px;
     }
 
-    .orden[data-prioridad="alta"] { background: #e53935; }
-    .orden[data-prioridad="media"] { background: #fb8c00; }
-    .orden[data-prioridad="baja"] { background: #43a047; }
+    .op[data-orden="1001"] { background: #43a047; }
+    .op[data-orden="1002"] { background: #fb8c00; }
 
-    .conflicto {
-      outline: 3px solid red;
-    }
-
-    .hora-marca {
+    .hora {
       position: absolute;
       top: 0;
-      height: 20px;
       width: 60px;
-      border-left: 1px dashed #999;
+      height: 20px;
       font-size: 10px;
-      color: #555;
+      border-left: 1px dashed #aaa;
       text-align: left;
       padding-left: 2px;
     }
@@ -54,104 +63,101 @@
 </head>
 <body>
 
-<h2>Línea de Tiempo Horizontal (48h)</h2>
-<div class="timeline-container" id="timeline"></div>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<h2>Heijunka por Centros de Trabajo</h2>
+<div class="gantt" id="gantt"></div>
 
 <script>
-  const ordenes = [
-    { id: 101, parte: 'PZA-001', cantidad: 100, duracion: 60, fecha: '2025-05-29', horaInicio: '06:30', prioridad: 'alta' },
-    { id: 102, parte: 'PZA-002', cantidad: 150, duracion: 90, fecha: '2025-05-29', horaInicio: '08:00', prioridad: 'media' },
-    { id: 103, parte: 'PZA-003', cantidad: 200, duracion: 80, fecha: '2025-05-29', horaInicio: '11:00', prioridad: 'baja' },
-    { id: 104, parte: 'PZA-004', cantidad: 180, duracion: 120, fecha: '2025-05-30', horaInicio: '07:30', prioridad: 'media' },
-    { id: 105, parte: 'PZA-005', cantidad: 90,  duracion: 60, fecha: '2025-05-30', horaInicio: '10:00', prioridad: 'alta' },
-    { id: 106, parte: 'PZA-006', cantidad: 160, duracion: 100, fecha: '2025-05-30', horaInicio: '13:00', prioridad: 'baja' }
-  ];
+const centros = ['Corte', 'Soldadura', 'Pintura'];
+const baseDate = new Date('2025-05-29T00:00:00');
 
-  const baseDate = new Date('2025-05-29T00:00:00');
-
-  function minDesdeBase(fechaStr, horaStr) {
-    const fecha = new Date(`${fechaStr}T${horaStr}`);
-    const diffMs = fecha - baseDate;
-    return Math.floor(diffMs / 60000); // minutos
+const ordenes = [
+  {
+    id: 1001,
+    parte: 'PZA-A',
+    cantidad: 100,
+    operaciones: [
+      { centro: 'Corte', duracion: 60, horaInicio: '06:30' },
+      { centro: 'Soldadura', duracion: 90 },
+      { centro: 'Pintura', duracion: 45 }
+    ]
+  },
+  {
+    id: 1002,
+    parte: 'PZA-B',
+    cantidad: 80,
+    operaciones: [
+      { centro: 'Corte', duracion: 45, horaInicio: '07:30' },
+      { centro: 'Soldadura', duracion: 60 }
+    ]
   }
+];
 
-  function generarMarcasHora() {
-    const $timeline = $('#timeline');
+function minDesdeBase(hora) {
+  if (!hora) return 0;
+  const [h, m] = hora.split(':').map(Number);
+  const fecha = new Date(baseDate);
+  fecha.setHours(h, m);
+  return Math.floor((fecha - baseDate) / 60000);
+}
+
+function generarLineasTiempo() {
+  const $gantt = document.getElementById('gantt');
+
+  centros.forEach(centro => {
+    const cont = document.createElement('div');
+    cont.className = 'centro';
+
+    const label = document.createElement('div');
+    label.className = 'centro-label';
+    label.textContent = centro;
+
+    const linea = document.createElement('div');
+    linea.className = 'timeline';
+
+    // Marcas de hora
     for (let i = 0; i <= 48; i++) {
-      const left = i * 60;
       const hora = new Date(baseDate.getTime() + i * 3600000);
-      const label = hora.toISOString().substring(0, 16).replace('T', ' ');
-      $timeline.append(`<div class="hora-marca" style="left: ${left}px;">${label}</div>`);
+      const text = hora.toISOString().substring(11, 16);
+      const div = document.createElement('div');
+      div.className = 'hora';
+      div.style.left = `${i * 60}px`;
+      div.textContent = text;
+      linea.appendChild(div);
     }
-  }
 
-  function colocarOrdenes() {
-    const $timeline = $('#timeline');
-
-    ordenes.forEach(o => {
-      const left = minDesdeBase(o.fecha, o.horaInicio);
-      const $orden = $(`<div class="orden"
-        data-id="${o.id}"
-        data-prioridad="${o.prioridad}"
-        data-inicio="${left}"
-        data-duracion="${o.duracion}"
-      >#${o.id}<br>${o.parte}<br>${o.cantidad} pzs</div>`);
-
-      $orden.css({ left: left + 'px', width: o.duracion + 'px' });
-
-      $orden.draggable({
-        containment: '#timeline',
-        axis: 'x',
-        stop: function () {
-          validarSolapes();
-        }
-      });
-
-      $orden.resizable({
-        handles: 'e',
-        minWidth: 30,
-        stop: function (event, ui) {
-          const nuevaDuracion = ui.size.width;
-          const nuevaCantidad = Math.round(nuevaDuracion);
-          $(this).attr('data-duracion', nuevaDuracion).html(`#${o.id}<br>${o.parte}<br>${nuevaCantidad} pzs`);
-          validarSolapes();
-        }
-      });
-
-      $timeline.append($orden);
-    });
-  }
-
-  function validarSolapes() {
-    const $ordenes = $('.orden');
-    const posiciones = [];
-
-    $ordenes.removeClass('conflicto');
-
-    $ordenes.each(function () {
-      const left = $(this).position().left;
-      const width = $(this).outerWidth();
-      posiciones.push({ el: this, left, right: left + width });
-    });
-
-    for (let i = 0; i < posiciones.length; i++) {
-      for (let j = i + 1; j < posiciones.length; j++) {
-        if (posiciones[i].right > posiciones[j].left && posiciones[i].left < posiciones[j].right) {
-          $(posiciones[i].el).addClass('conflicto');
-          $(posiciones[j].el).addClass('conflicto');
-        }
-      }
-    }
-  }
-
-  $(function () {
-    generarMarcasHora();
-    colocarOrdenes();
-    validarSolapes();
+    cont.appendChild(label);
+    cont.appendChild(linea);
+    $gantt.appendChild(cont);
   });
+}
+
+function colocarOperaciones() {
+  const $timelines = document.querySelectorAll('.timeline');
+
+  ordenes.forEach(orden => {
+    let offset = 0;
+    orden.operaciones.forEach((op, idx) => {
+      const centroIdx = centros.indexOf(op.centro);
+      const $linea = $timelines[centroIdx];
+      const left = op.horaInicio ? minDesdeBase(op.horaInicio) : offset;
+      offset = left + op.duracion;
+
+      const div = document.createElement('div');
+      div.className = 'op';
+      div.setAttribute('data-orden', orden.id);
+      div.style.left = `${left}px`;
+      div.style.width = `${op.duracion}px`;
+      div.innerHTML = `
+        #${orden.id}<br>${orden.parte}<br>${op.centro}<br>${op.duracion}min
+      `;
+
+      $linea.appendChild(div);
+    });
+  });
+}
+
+generarLineasTiempo();
+colocarOperaciones();
 </script>
 </body>
 </html>
