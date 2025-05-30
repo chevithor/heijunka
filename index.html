@@ -157,6 +157,7 @@ function colocarOperaciones() {
       div.setAttribute('data-idx', idx);
       div.style.left = `${left}px`;
       div.style.width = `${op.duracion}px`;
+      div.style.bottom = `02px`;
       div.innerHTML = `
         #${orden.id}<br>${orden.parte}<br>${op.centro}<br>${op.duracion}min
       `;
