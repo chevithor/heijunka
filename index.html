@@ -128,7 +128,7 @@ function generarLineasTiempo() {
     // Marcas de hora
     for (let i = 0; i <= 48; i++) {
       const hora = new Date(baseDate.getTime() + i * 3600000);
-      console.log hora;
+      console.log (hora);
       const text = hora.toISOString().substring(11, 16);
       const div = document.createElement('div');
       div.className = 'hora';
