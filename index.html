@@ -109,8 +109,9 @@ function minDesdeBase(hora) {
   if (!hora) return 0;
   const [h, m] = hora.split(':').map(Number);
   const fecha = new Date(baseDateUTC); // copia de la base
+  console.log('Antes de Agregar Hora' + fecha);
   fecha.setHours(h, m, 0, 0);
-  console.log(fecha);
+  console.log('Despues de Agregar Hora' + fecha);
   return Math.floor((fecha - baseDate) / 60000);
 }
 
