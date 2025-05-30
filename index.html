@@ -2,10 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Heijunka Drag and Drop - Múltiples Centros</title>
+  <title>Heijunka Drag & Drop - Centros de Trabajo</title>
   <style>
     body { font-family: sans-serif; margin: 0; padding: 10px; overflow-x: auto; }
-    .gantt { position: relative; width: 2880px; }
+    .gantt { position: relative; width: 1920px; }
 
     .centro {
       position: relative;
@@ -72,18 +72,12 @@
 </head>
 <body>
 
-<h2>Heijunka por Centros de Trabajo - Drag and Drop</h2>
+<h2>Heijunka por Centros de Trabajo - Drag and Drop Secuencial</h2>
 <div class="gantt" id="gantt"></div>
 
 <script>
 const centros = ['Corte', 'Soldadura', 'Pintura'];
-
-const baseDateUTC = Date.UTC(2025, 04, 29, 0, 0);  
-const baseDate = new Date(baseDateUTC); 
-console.log('fecha basedate: '+ baseDate);
-console.log('fecha basedate ISOString: '+ baseDate.toISOString());
-// Año, mes (0-indexed), día, hora, minuto
-
+const baseDate = new Date(2025, 4, 29, 6, 0); // 06:00 hora local (no UTC)
 
 const ordenes = [
   {
@@ -110,10 +104,8 @@ const ordenes = [
 function minDesdeBase(hora) {
   if (!hora) return 0;
   const [h, m] = hora.split(':').map(Number);
-  const fecha = new Date(baseDateUTC); // copia de la base
-  console.log('Antes de Agregar Hora' + fecha);
+  const fecha = new Date(baseDate);
   fecha.setHours(h, m, 0, 0);
-  console.log('Despues de Agregar Hora' + fecha);
   return Math.floor((fecha - baseDate) / 60000);
 }
 
@@ -130,11 +122,9 @@ function generarLineasTiempo() {
     const linea = document.createElement('div');
     linea.className = 'timeline';
 
-    // Marcas de hora
-    for (let i = 0; i <= 48; i++) {
+    for (let i = 0; i <= 16; i++) {
       const hora = new Date(baseDate.getTime() + i * 3600000);
-      //console.log (hora.toISOString());
-      const text = hora.toISOString().substring(11, 16);
+      const text = hora.toTimeString().substring(0, 5);
       const div = document.createElement('div');
       div.className = 'hora';
       div.style.left = `${i * 60}px`;
@@ -164,6 +154,7 @@ function colocarOperaciones() {
       div.className = 'op';
       div.setAttribute('data-orden', orden.id);
       div.setAttribute('data-centro', op.centro);
+      div.setAttribute('data-idx', idx);
       div.style.left = `${left}px`;
       div.style.width = `${op.duracion}px`;
       div.innerHTML = `
@@ -183,8 +174,20 @@ function habilitarDrag() {
       const $this = $(this);
       const nuevaPos = ui.position.left;
       const ordenId = $this.data('orden');
-      const centro = $this.parent().prev('.centro-label').text();
-      reprogramarOrdenDesde(ordenId, centro, nuevaPos);
+      const centro = $this.data('centro');
+      const idx = parseInt($this.data('idx'));
+
+      const orden = ordenes.find(o => o.id == ordenId);
+      const opAnterior = orden.operaciones[idx - 1];
+      const minPermitido = opAnterior ? opAnterior._inicio + opAnterior.duracion : 0;
+
+      if (nuevaPos < minPermitido) {
+        // Si violamos el encadenamiento, regresamos al mínimo permitido
+        $(this).css('left', `${minPermitido}px`);
+        reprogramarOrdenDesde(ordenId, centro, minPermitido);
+      } else {
+        reprogramarOrdenDesde(ordenId, centro, nuevaPos);
+      }
     }
   });
 }
@@ -204,10 +207,7 @@ function reprogramarOrdenDesde(ordenId, centroInicio, nuevaHoraMin) {
     if (actualizar) {
       op._inicio = tiempoActual;
 
-      const $bloque = $(`.op[data-orden="${ordenId}"]`).filter(function () {
-        return $(this).data('centro') === op.centro;
-      });
-
+      const $bloque = $(`.op[data-orden="${ordenId}"][data-centro="${op.centro}"]`);
       $bloque.css('left', `${tiempoActual}px`);
       tiempoActual += op.duracion;
     }
@@ -241,7 +241,6 @@ function evitarSolapes(ordenId) {
   });
 }
 
-// Inicialización completa
 $(function () {
   generarLineasTiempo();
   colocarOperaciones();
