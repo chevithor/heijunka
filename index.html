@@ -179,8 +179,10 @@ function habilitarDrag() {
 
       const orden = ordenes.find(o => o.id == ordenId);
       const opAnterior = orden.operaciones[idx - 1];
-      const minPermitido = opAnterior ? opAnterior._inicio + opAnterior.duracion : 0;
+      //const minPermitido = opAnterior ? opAnterior._inicio + opAnterior.duracion : 0;
+       const minPermitido = opAnterior ? opAnterior._inicio + 30 : 0;
 
+      
       if (nuevaPos < minPermitido) {
         // Si violamos el encadenamiento, regresamos al mínimo permitido
         $(this).css('left', `${minPermitido}px`);
