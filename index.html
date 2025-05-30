@@ -78,7 +78,8 @@
 <script>
 const centros = ['Corte', 'Soldadura', 'Pintura'];
 
-const baseDate = new Date(Date.UTC(2025, 4, 29, 0, 0)); 
+const baseDateUTC = Date.UTC(2025, 4, 29, 0, 0);  
+const baseDate = new Date(baseDateUTC); 
 // Año, mes (0-indexed), día, hora, minuto
 
 
@@ -107,7 +108,7 @@ const ordenes = [
 function minDesdeBase(hora) {
   if (!hora) return 0;
   const [h, m] = hora.split(':').map(Number);
-  const fecha = new Date(Date.UTC(baseDate)); // copia de la base
+  const fecha = new Date(baseDateUTC); // copia de la base
   fecha.setHours(h, m, 0, 0);
   console.log(fecha);
   return Math.floor((fecha - baseDate) / 60000);
