@@ -78,8 +78,10 @@
 <script>
 const centros = ['Corte', 'Soldadura', 'Pintura'];
 
-const baseDateUTC = Date.UTC(2025, 4, 29, 0, 0);  
+const baseDateUTC = Date.UTC(2025, 04, 29, 0, 0);  
 const baseDate = new Date(baseDateUTC); 
+console.log('fecha basedate: '+ baseDate);
+console.log('fecha basedate ISOString: '+ baseDate.toISOString());
 // Año, mes (0-indexed), día, hora, minuto
 
 
