@@ -163,6 +163,7 @@ generarLineasTiempo();
 colocarOperaciones();
 
 </script>
+</body>
 
 <script>
 function habilitarDrag() {
@@ -237,8 +238,10 @@ function evitarSolapes(ordenId) {
 }
 
 // Activar
-  habilitarDrag();
 
+$(function () {
+  habilitarDrag();
+});
 </script>
-</body>
+
 </html>
