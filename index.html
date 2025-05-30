@@ -77,7 +77,10 @@
 
 <script>
 const centros = ['Corte', 'Soldadura', 'Pintura'];
-const baseDate = new Date('2025-05-29T00:00:00');
+
+const baseDate = new Date(2025, 4, 29, 0, 0); 
+// Año, mes (0-indexed), día, hora, minuto
+
 
 const ordenes = [
   {
@@ -104,8 +107,8 @@ const ordenes = [
 function minDesdeBase(hora) {
   if (!hora) return 0;
   const [h, m] = hora.split(':').map(Number);
-  const fecha = new Date(baseDate);
-  fecha.setHours(h, m);
+  const fecha = new Date(baseDate); // copia de la base
+  fecha.setHours(h, m, 0, 0);
   return Math.floor((fecha - baseDate) / 60000);
 }
 
