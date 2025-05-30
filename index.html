@@ -122,7 +122,7 @@ function generarLineasTiempo() {
     const linea = document.createElement('div');
     linea.className = 'timeline';
 
-    for (let i = 0; i <= 16; i++) {
+    for (let i = 0; i <= 32; i++) {
       const hora = new Date(baseDate.getTime() + i * 3600000);
       const text = hora.toTimeString().substring(0, 5);
       const div = document.createElement('div');
