@@ -46,18 +46,17 @@ function minutosDesdeInicio(fechaStr) {
 }
 
 function crearCentro(nombre) {
-  const div = $(\`
-    <div class="centro" data-centro="\${nombre}">
-      <div class="centro-label">\${nombre}</div>
-      <div class="timeline"></div>
-    </div>\`);
+  const div = $('<div class="centro" data-centro="' + nombre + '">' +
+                  '<div class="centro-label">' + nombre + '</div>' +
+                  '<div class="timeline"></div>' +
+                '</div>');
   $('#gantt').append(div);
 
   const lineaTiempo = div.find('.timeline');
   for (let h = 0; h < 24; h++) {
     const hora = new Date(START_TIME.getTime() + h * 60 * 60000);
     const left = h * 60 * PX_PER_MIN;
-    lineaTiempo.append(\`<div class="hora" style="left: \${left}px">\${hora.getHours()}:00</div>\`);
+    lineaTiempo.append('<div class="hora" style="left: ' + left + 'px">' + hora.getHours() + ':00</div>');
   }
 
   lineaTiempo.droppable({
@@ -75,7 +74,7 @@ function crearCentro(nombre) {
       if (index > 0) {
         const prev = receta[index - 1];
         if (!asignadas.has(op.id + '-' + prev)) {
-          alert('Primero debes despachar la operaciÃ³n anterior: ' + prev);
+          alert('Primero debes despachar la operación anterior: ' + prev);
           return;
         }
       }
@@ -98,9 +97,15 @@ function crearOperacion(op, isQueue = false) {
   const id = op.id + '-' + op.centro;
   const width = op.duracion * PX_PER_MIN;
 
-  const $div = $(`<div class="op" title="\${op.horaInicio ? 'Inicio: ' + new Date(op.horaInicio).toLocaleTimeString() : ''}">
-    <strong>Ord \${op.id}</strong><br>Pza: \${op.parte}<br>Qty: \${op.cantidad}
-  </div>`);
+  const horaTooltip = op.horaInicio ? 'Inicio: ' + new Date(op.horaInicio).toLocaleTimeString() : '';
+  const contenido = '<div class="op" title="' + horaTooltip + '">' +
+                    '<strong>Ord ' + op.id + '</strong><br>' +
+                    'Pza: ' + op.parte + '<br>' +
+                    'Qty: ' + op.cantidad +
+                    '</div>';
+
+  const $div = $(contenido);
+
   $div.css({
     backgroundColor: color,
     width: width + 'px',
