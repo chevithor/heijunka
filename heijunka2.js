@@ -1,3 +1,4 @@
+
 const CENTROS = ['Corte', 'Soldadura', 'Pintura'];
 const START_TIME = new Date('2024-01-01T06:30:00');
 const PX_PER_MIN = 2;
@@ -45,18 +46,18 @@ function minutosDesdeInicio(fechaStr) {
 }
 
 function crearCentro(nombre) {
-  const div = $(\'
+  const div = $(\`
     <div class="centro" data-centro="\${nombre}">
       <div class="centro-label">\${nombre}</div>
       <div class="timeline"></div>
-    </div>\');
+    </div>\`);
   $('#gantt').append(div);
 
   const lineaTiempo = div.find('.timeline');
   for (let h = 0; h < 24; h++) {
     const hora = new Date(START_TIME.getTime() + h * 60 * 60000);
     const left = h * 60 * PX_PER_MIN;
-    lineaTiempo.append(\'<div class="hora" style="left: \${left}px">\${hora.getHours()}:00</div>\');
+    lineaTiempo.append(\`<div class="hora" style="left: \${left}px">\${hora.getHours()}:00</div>\`);
   }
 
   lineaTiempo.droppable({
@@ -97,9 +98,9 @@ function crearOperacion(op, isQueue = false) {
   const id = op.id + '-' + op.centro;
   const width = op.duracion * PX_PER_MIN;
 
-  const $div = $('<div class="op" title="\${op.horaInicio ? 'Inicio: ' + new Date(op.horaInicio).toLocaleTimeString() : ''}">
+  const $div = $(`<div class="op" title="\${op.horaInicio ? 'Inicio: ' + new Date(op.horaInicio).toLocaleTimeString() : ''}">
     <strong>Ord \${op.id}</strong><br>Pza: \${op.parte}<br>Qty: \${op.cantidad}
-  </div>');
+  </div>`);
   $div.css({
     backgroundColor: color,
     width: width + 'px',
@@ -126,7 +127,7 @@ function cargarOrdenes() {
       const id = op.id + '-' + op.centro;
       if (op.horaInicio) {
         asignadas.add(id);
-        $('[data-centro="\${op.centro}"] .timeline').append(crearOperacion(op));
+        $(`[data-centro="\${op.centro}"] .timeline`).append(crearOperacion(op));
       } else if (partes[op.parte].receta.indexOf(op.centro) === 0) {
         // Solo la primera operaciÃ³n va a la queue
         $('.queue').append(crearOperacion(op, true));
