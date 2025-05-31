@@ -1,2 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Heijunka Drag & Drop</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      margin: 0;
+      padding: 10px;
+    }
 
+    .queue {
+      width: 220px;
+      background: #f0f0f0;
+      padding: 10px;
+      margin-right: 10px;
+      border-right: 1px solid #ccc;
+    }
+
+    .queue h3 {
+      margin-top: 0;
+    }
+
+    .queue .op {
+      margin-bottom: 10px;
+      opacity: 0.5;
+      cursor: move;
+    }
+
+    .gantt {
+      position: relative;
+      flex-grow: 1;
+      overflow-x: auto;
+    }
+
+    .centro {
+      position: relative;
+      height: 100px;
+      border-bottom: 1px solid #aaa;
+      margin-bottom: 10px;
+    }
+
+    .centro-label {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 80px;
+      height: 100%;
+      background: #ddd;
+      writing-mode: vertical-rl;
+      text-align: center;
+      font-weight: bold;
+      padding: 5px;
+      box-sizing: border-box;
+    }
+
+    .timeline {
+      margin-left: 80px;
+      height: 100%;
+      position: relative;
+      background: #f5f5f5;
+    }
+
+    .op {
+      position: absolute;
+      height: 80px;
+      color: white;
+      border-radius: 4px;
+      padding: 4px;
+      box-sizing: border-box;
+      font-size: 12px;
+      cursor: move;
+      transition: box-shadow 0.2s ease;
+    }
+
+    .op:hover,
+    .op:focus,
+    .op:active {
+      outline: none;
+      box-shadow: 0 0 8px 2px rgba(0,0,0,0.3);
+      z-index: 10;
+    }
+
+    .hora {
+      position: absolute;
+      top: 0;
+      width: 60px;
+      height: 20px;
+      font-size: 10px;
+      border-left: 1px dashed #aaa;
+      text-align: left;
+      padding-left: 2px;
+    }
+  </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+</head>
+<body>
+<div class="queue"><h3>Queue de Inicio</h3></div>
+<div class="gantt" id="gantt"></div>
+<script src="heijunka.js"></script>
+</body>
+</html>
 
