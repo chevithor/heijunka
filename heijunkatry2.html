@@ -12,7 +12,7 @@
     }
 
     .queue {
-      width: 200px;
+      width: 220px;
       background: #f0f0f0;
       padding: 10px;
       margin-right: 10px;
@@ -108,7 +108,7 @@
 
 <script>
 const centros = ['Corte', 'Soldadura', 'Pintura'];
-const baseDate = new Date(2025, 4, 29, 6, 0); // 06:00 AM
+const baseDate = new Date(2025, 4, 29, 6, 0); // 06:00
 
 const coloresPorParte = {};
 
@@ -206,7 +206,8 @@ function colocarOperaciones() {
       div.setAttribute('data-centro', op.centro);
       div.setAttribute('data-idx', idx);
       div.setAttribute('data-parte', orden.parte);
-      div.textContent = `${orden.parte} - ${op.centro}`;
+      div.setAttribute('data-cantidad', orden.cantidad);
+      div.textContent = `${orden.parte} - O${orden.id} (${orden.cantidad})`;
       div.style.backgroundColor = color;
 
       if (op.horaInicio) {
@@ -232,15 +233,22 @@ function habilitarDrag() {
   });
 
   $('.timeline').droppable({
-    accept: '.op',
+    accept: function (el) {
+      const ordenId = el.data('orden');
+      const centro = $(this).parent().find('.centro-label').text();
+      const orden = ordenes.find(o => o.id == ordenId);
+      return orden.operaciones.some(op => op.centro === centro);
+    },
     drop: function (event, ui) {
       const centro = $(this).parent().find('.centro-label').text();
-      const $clone = $(ui.helper).clone().removeAttr('style').removeClass('ui-draggable-dragging');
       const offsetX = event.pageX - $(this).offset().left;
       const ordenId = ui.helper.data('orden');
       const idx = parseInt(ui.helper.data('idx'));
       const orden = ordenes.find(o => o.id == ordenId);
       const op = orden.operaciones[idx];
+
+      if (!orden.operaciones.find(o => o.centro === centro)) return;
+
       const dur = op.duracion;
       const color = colorHexParte(orden.parte);
 
@@ -251,8 +259,9 @@ function habilitarDrag() {
         return (offsetX < r && offsetX + dur > l);
       });
 
-      if (conflictos.length > 0) return; // bloqueo
+      if (conflictos.length > 0) return;
 
+      const $clone = $(ui.helper).clone().removeAttr('style').removeClass('ui-draggable-dragging');
       $clone.css({
         left: offsetX,
         width: dur,
