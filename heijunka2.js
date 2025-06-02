@@ -37,7 +37,6 @@ const ordenes = [
     { centro: 'Soldadura', duracion: 40 }
   ]}
 ];
-
 const asignadas = new Set();
 
 function minutosDesdeInicio(fechaStr) {
@@ -63,11 +62,15 @@ function crearCentro(nombre) {
     accept: '.op',
     drop: function(event, ui) {
       const op = ui.helper.data('op');
-      const centro = $(this).closest('.centro').data('centro');
+      if (!op) {
+        alert('Error interno: operación no encontrada. Intenta de nuevo.');
+        return;
+      }
       if (!op.parte || !partes[op.parte]) {
         alert("Operación sin parte válida.");
         return;
       }
+      const centro = $(this).closest('.centro').data('centro');
       const receta = partes[op.parte].receta;
       const index = receta.indexOf(op.centro);
 
@@ -166,6 +169,8 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
       revert: 'invalid',
       start: function(e, ui) {
         $(ui.helper).css('opacity', 0.7);
+        // This line ensures data is present on the helper!
+        $(ui.helper).data('op', op);
       }
     });
   }
