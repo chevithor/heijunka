@@ -96,7 +96,7 @@ function crearCentro(nombre) {
       asignadas.add(op.id + '-' + op.centro);
 
       // Remove old element, add new one (draggable in gantt)
-      ui.helper.remove();
+      ui.draggable.remove();
 
       // Remove any existing op with same id in timeline (if moving)
       $(this).find('.op').each(function() {
