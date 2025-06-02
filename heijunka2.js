@@ -208,7 +208,6 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
   $div.css({
     backgroundColor: color,
     width: width + 'px',
-    bottom:  '02px',
     opacity: isQueue ? 0.5 : 1,
     left: op.horaInicio ? (minutosDesdeInicio(op.horaInicio) * PX_PER_MIN) + 'px' : 0,
     position: 'absolute'
