@@ -134,10 +134,11 @@ for (let h = 0; h < 24; h++) {
       const newOpDiv = crearOperacion(op, false, true); // inGantt = true
       $(this).append(newOpDiv);
 
-      // Si es la primer operación, programar automáticamente el resto
+      /*/ Si es la primer operación, programar automáticamente el resto
       if (index === 0) {
         programarSiguientes(op);
-      }
+      } */  
+      programarSiguientes(op);
     }
   });
 }
