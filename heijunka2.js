@@ -94,6 +94,7 @@ for (let h = 0; h < 24; h++) {
           return;
         }
         const prevStart = new Date(prevOp.horaInicio);
+        const prevEnd = new Date(prevStart.getTime() + prevOp.duracion * 60000);
         // La restricción es que la hora de inicio de la siguiente op debe ser al menos 15 min después de la hora de inicio de la anterior
         const minStart = new Date(prevStart.getTime() + GAP_MINUTES * 60000);
 
@@ -163,8 +164,9 @@ function programarSiguientes(op) {
     if (!nextOp) break;
     // Hora de inicio: hora de inicio anterior + GAP_MINUTES
     const prevStart = new Date(prevOp.horaInicio);
+    const prevEnd = new Date(prevStart.getTime() + prevOp.duracion * 60000);
     const minStart = new Date(prevStart.getTime() + GAP_MINUTES * 60000);
-    nextOp.horaInicio = minStart.toISOString();
+    nextOp.horaInicio = prevEnd.toISOString();
     asignadas.add(nextOp.id + '-' + nextOp.centro);
 
     // Pintar en Gantt
