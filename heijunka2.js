@@ -83,7 +83,7 @@ function crearCentro(nombre) {
 
       if (op.centro !== centro) return;
 
-      // Validación: para operaciones subsecuentes, no permitir programar antes de horaFinal + GAP_MINUTES
+      // Validación: para operaciones subsecuentes, horaInicio >= horaInicio anterior + 15 min
       if (index > 0) {
         const prevCentro = receta[index - 1];
         const prevOp = findOperacion(op.id, prevCentro);
@@ -92,11 +92,11 @@ function crearCentro(nombre) {
           return;
         }
         const prevStart = new Date(prevOp.horaInicio);
-        const prevEnd = new Date(prevStart.getTime() + prevOp.duracion * 60000);
-        const minStart = new Date(prevEnd.getTime() + GAP_MINUTES * 60000);
+        // La restricción es que la hora de inicio de la siguiente op debe ser al menos 15 min después de la hora de inicio de la anterior
+        const minStart = new Date(prevStart.getTime() + GAP_MINUTES * 60000);
 
         // Calcular hora del drop
-        const left = event.pageX - $(this).offset().left - 0; // 80px centro-label, quitar lo del centro
+        const left = event.pageX - $(this).offset().left; // <-- sin offset de label
         const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
         const dropDate = new Date(START_TIME.getTime() + dropMin * 60000);
 
@@ -107,7 +107,7 @@ function crearCentro(nombre) {
         op.horaInicio = dropDate.toISOString();
       } else {
         // Primera operación: libre
-        const left = event.pageX - $(this).offset().left - 0;
+        const left = event.pageX - $(this).offset().left; // <-- sin offset de label
         const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
         const dropDate = new Date(START_TIME.getTime() + dropMin * 60000);
         op.horaInicio = dropDate.toISOString();
@@ -150,6 +150,7 @@ function findOperacion(ordenId, centro) {
 
 /**
  * Programa automáticamente las operaciones subsecuentes a partir de la que se acaba de agendar.
+ * La hora de inicio de cada siguiente operación es la hora de inicio de la anterior + 15 minutos.
  */
 function programarSiguientes(op) {
   const receta = partes[op.parte].receta;
@@ -158,10 +159,9 @@ function programarSiguientes(op) {
     const nextCentro = receta[i];
     const nextOp = findOperacion(op.id, nextCentro);
     if (!nextOp) break;
-    // Hora de inicio: hora final anterior + GAP_MINUTES
+    // Hora de inicio: hora de inicio anterior + GAP_MINUTES
     const prevStart = new Date(prevOp.horaInicio);
-    const prevEnd = new Date(prevStart.getTime() + prevOp.duracion * 60000);
-    const minStart = new Date(prevEnd.getTime() + GAP_MINUTES * 60000);
+    const minStart = new Date(prevStart.getTime() + GAP_MINUTES * 60000);
     nextOp.horaInicio = minStart.toISOString();
     asignadas.add(nextOp.id + '-' + nextOp.centro);
 
