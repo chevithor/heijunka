@@ -106,7 +106,7 @@ for (let h = 0; h < 24; h++) {
         if (dropDate < minStart) {
           alert("No puedes programar antes de " + minStart.toLocaleTimeString() + " (15 min después de la operación previa)");
          // return;
-        const dropDate = new Date(minStart.getTime());
+        const dropDate = new Date(prevStart.getTime() + GAP_MINUTES * 60000);
         console.log(dropDate.toISOString());
         }
         op.horaInicio = dropDate.toISOString();
