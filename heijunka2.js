@@ -50,21 +50,15 @@ function sumarMinutos(fechaStr, minutos) {
   return new Date(fecha.getTime() + minutos * 60000).toISOString();
 }
 
-// Crea la estructura visual de cada centro, su timeline y su queue de primeras operaciones
+// Crea la estructura visual de cada centro y su timeline SOLAMENTE (no queue aquí)
 function crearCentro(nombre) {
   const div = $(`
-    <div class="centro" data-centro="${nombre}" style="display: flex; align-items: flex-start;">
-      <div style="flex: 1 1 auto;">
-        <div class="centro-label">${nombre}</div>
-        <div class="timeline" style="position: relative; height: 100px; background: #f8f8f8; margin-bottom: 10px;"></div>
-      </div>
-      <div class="queue-centro" data-centro-queue="${nombre}" style="min-width: 140px; margin-left: 12px;">
-        <div class="queue-title" style="font-size: 12px; text-align: center; margin-bottom: 4px; color: #444;">Queue</div>
-        <div class="queue-list"></div>
-      </div>
+    <div class="centro" data-centro="${nombre}" style="margin-bottom:32px;">
+      <div class="centro-label">${nombre}</div>
+      <div class="timeline" style="position: relative; height: 100px; background: #f8f8f8; margin-bottom: 10px;"></div>
     </div>
   `);
-  $('#gantt').append(div);
+  $('#gantt-timelines').append(div);
 
   const lineaTiempo = div.find('.timeline');
   for (let h = 0; h < 24; h++) {
@@ -198,13 +192,29 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
                     '</div>';
 
   const $div = $(contenido);
-  $div.css({
-    backgroundColor: color,
-    width: width + 'px',
-    opacity: isQueue ? 0.5 : 1,
-    left: op.horaInicio ? (minutosDesdeInicio(op.horaInicio) * PX_PER_MIN) + 'px' : 0,
-    position: 'absolute'
-  });
+
+  // Si es queue, posición estática. Si es Gantt, posición absoluta (alineado por left).
+  if (isQueue) {
+    $div.css({
+      backgroundColor: color,
+      opacity: 0.5,
+      marginBottom: '8px',
+      position: 'static',
+      width: width + 'px',
+      minWidth: '65px',
+      maxWidth: '350px'
+    });
+  } else {
+    $div.css({
+      backgroundColor: color,
+      width: width + 'px',
+      opacity: 1,
+      left: op.horaInicio ? (minutosDesdeInicio(op.horaInicio) * PX_PER_MIN) + 'px' : 0,
+      position: 'absolute',
+      minWidth: '65px',
+      maxWidth: '350px'
+    });
+  }
   $div.data('op', op);
 
   $div.draggable({
@@ -223,7 +233,7 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
 }
 
 /**
- * Cada centro tiene su propio queue para primeras operaciones NO despachadas.
+ * Los queues de primeras operaciones van alineados a la izquierda, uno por cada centro.
  * El queue de cada centro muestra solo las primeras operaciones de cada orden que no han sido despachadas.
  */
 function cargarOrdenes() {
@@ -255,9 +265,22 @@ function cargarOrdenes() {
 }
 
 $(function() {
-  if ($('#gantt').length === 0) {
-    $('body').append('<div id="gantt"></div>');
+  // Estructura: un #gantt-main que contiene #gantt-queues y #gantt-timelines alineados horizontalmente
+  if ($('#gantt-main').length === 0) {
+    $('body').append('<div id="gantt-main" style="display: flex; align-items: flex-start; gap: 32px;"><div id="gantt-queues"></div><div id="gantt-timelines" style="flex:1"></div></div>');
   }
+  // Crear los queues a la izquierda
+  for (const centro of CENTROS) {
+    if ($(`[data-centro-queue="${centro}"]`).length === 0) {
+      $('#gantt-queues').append(`
+        <div class="queue-centro" data-centro-queue="${centro}" style="min-width: 140px; margin-bottom:16px; background: #f2f6fa; border-radius: 6px; border: 1px solid #b3c9e2; padding: 4px 0 7px 0; min-height: 80px; box-sizing: border-box; box-shadow: 1px 2px 5px #0002;">
+          <div class="queue-title" style="font-size: 12px; text-align: center; margin-bottom: 4px; color: #444; font-weight: bold; letter-spacing: 1px;">Queue ${centro}</div>
+          <div class="queue-list" style="display:flex; flex-direction:column; gap:8px; align-items:stretch; padding:2px 4px;"></div>
+        </div>
+      `);
+    }
+  }
+  // Crear los centros/timelines a la derecha
   CENTROS.forEach(crearCentro);
   cargarOrdenes();
 });
