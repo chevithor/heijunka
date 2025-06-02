@@ -68,57 +68,57 @@ function crearCentro(nombre) {
       alert('Error interno: operación no encontrada. Intenta de nuevo.');
       return;
     }
-      if (!op.parte || !partes[op.parte]) {
-        alert("Operación sin parte válida.");
+    if (!op.parte || !partes[op.parte]) {
+      alert("Operación sin parte válida.");
+      return;
+    }
+    const centro = $(this).closest('.centro').data('centro');
+    const receta = partes[op.parte].receta;
+    const index = receta.indexOf(op.centro);
+
+    if (op.centro !== centro) return;
+    if (asignadas.has(op.id + '-' + op.centro)) return;
+
+    if (index > 0) {
+      const prev = receta[index - 1];
+      if (!asignadas.has(op.id + '-' + prev)) {
+        alert('Primero debes despachar la operación anterior: ' + prev);
         return;
       }
-      const centro = $(this).closest('.centro').data('centro');
-      const receta = partes[op.parte].receta;
-      const index = receta.indexOf(op.centro);
+    }
 
-      if (op.centro !== centro) return;
-      if (asignadas.has(op.id + '-' + op.centro)) return;
+    // Calculate start time from drop
+    const left = ui.offset.left - $(this).offset().left;
+    const startMin = Math.round(left / PX_PER_MIN);
+    const startDate = new Date(START_TIME.getTime() + startMin * 60000);
+    op.horaInicio = startDate.toISOString();
 
-      if (index > 0) {
-        const prev = receta[index - 1];
-        if (!asignadas.has(op.id + '-' + prev)) {
-          alert('Primero debes despachar la operación anterior: ' + prev);
-          return;
-        }
+    asignadas.add(op.id + '-' + op.centro);
+
+    // Remove the original from wherever it was dragged from (queue or timeline)
+    ui.draggable.remove();
+
+    // Remove any existing op with same id in timeline (if moving)
+    $(this).find('.op').each(function() {
+      const dataOp = $(this).data('op');
+      if (dataOp && dataOp.id === op.id && dataOp.centro === op.centro) {
+        $(this).remove();
       }
+    });
 
-      // Calculate start time from drop
-      const left = ui.offset.left - $(this).offset().left;
-      const startMin = Math.round(left / PX_PER_MIN);
-      const startDate = new Date(START_TIME.getTime() + startMin * 60000);
-      op.horaInicio = startDate.toISOString();
+    const newOpDiv = crearOperacion(op, false, true); // inGantt = true
+    $(this).append(newOpDiv);
 
-      asignadas.add(op.id + '-' + op.centro);
-
-      // Remove old element, add new one (draggable in gantt)
-      ui.draggable.remove();
-
-      // Remove any existing op with same id in timeline (if moving)
-      $(this).find('.op').each(function() {
-        const dataOp = $(this).data('op');
-        if (dataOp && dataOp.id === op.id && dataOp.centro === op.centro) {
-          $(this).remove();
-        }
-      });
-
-      const newOpDiv = crearOperacion(op, false, true); // inGantt = true
-      $(this).append(newOpDiv);
-
-      // Show next operation in queue if it exists and not assigned
-      if (index + 1 < receta.length) {
-        const nextCentro = receta[index + 1];
-        const nextOp = findOperacion(op.id, nextCentro);
-        if (nextOp && !asignadas.has(op.id + '-' + nextCentro)) {
-          $('.queue').append(crearOperacion(nextOp, true));
-        }
+    // Show next operation in queue if it exists and not assigned
+    if (index + 1 < receta.length) {
+      const nextCentro = receta[index + 1];
+      const nextOp = findOperacion(op.id, nextCentro);
+      if (nextOp && !asignadas.has(op.id + '-' + nextCentro)) {
+        $('.queue').append(crearOperacion(nextOp, true));
       }
     }
-  });
+  }
+});
 }
 
 // Helper to find operation by order id and centro
