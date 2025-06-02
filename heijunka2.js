@@ -96,7 +96,7 @@ function crearCentro(nombre) {
         const minStart = new Date(prevEnd.getTime() + GAP_MINUTES * 60000);
 
         // Calcular hora del drop
-        const left = event.pageX - $(this).offset().left - 80; // 80px centro-label
+        const left = event.pageX - $(this).offset().left - 0; // 80px centro-label, quitar lo del centro
         const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
         const dropDate = new Date(START_TIME.getTime() + dropMin * 60000);
 
@@ -107,7 +107,7 @@ function crearCentro(nombre) {
         op.horaInicio = dropDate.toISOString();
       } else {
         // Primera operación: libre
-        const left = event.pageX - $(this).offset().left - 80;
+        const left = event.pageX - $(this).offset().left - 0;
         const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
         const dropDate = new Date(START_TIME.getTime() + dropMin * 60000);
         op.horaInicio = dropDate.toISOString();
