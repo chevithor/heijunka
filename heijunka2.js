@@ -145,6 +145,7 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
                     '<strong>Ord ' + op.id + '</strong><br>' +
                     'Pza: ' + op.parte + '<br>' +
                     'Qty: ' + op.cantidad +
+                    'Receta: ' + receta +
                     '</div>';
 
   const $div = $(contenido);
