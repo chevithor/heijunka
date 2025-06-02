@@ -161,7 +161,7 @@ function programarSiguientes(op) {
     const nextOp = findOperacion(op.id, nextCentro);
     if (!nextOp) break;
     const prevStart = new Date(prevOp.horaInicio);
-    const minStart = new Date(prevStart.getTime() + GAP_MINUTES * 60000);
+    const minStart = new Date(prevStart.getTime() + prevOp.duracion * 60000);
     nextOp.horaInicio = minStart.toISOString();
     asignadas.add(nextOp.id + '-' + nextOp.centro);
 
