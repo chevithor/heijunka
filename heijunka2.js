@@ -58,14 +58,16 @@ function crearCentro(nombre) {
     lineaTiempo.append('<div class="hora" style="left: ' + left + 'px">' + hora.getHours() + ':00</div>');
   }
 
-  lineaTiempo.droppable({
-    accept: '.op',
-    drop: function(event, ui) {
-      const op = ui.helper.data('op');
-      if (!op) {
-        alert('Error interno: operación no encontrada. Intenta de nuevo.');
-        return;
-      }
+ lineaTiempo.droppable({
+  accept: '.op',
+  greedy: true,
+  drop: function(event, ui) {
+    console.log("Dropped!");
+    const op = ui.helper.data('op');
+    if (!op) {
+      alert('Error interno: operación no encontrada. Intenta de nuevo.');
+      return;
+    }
       if (!op.parte || !partes[op.parte]) {
         alert("Operación sin parte válida.");
         return;
@@ -169,8 +171,8 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
       revert: 'invalid',
       start: function(e, ui) {
         $(ui.helper).css('opacity', 0.7);
-        // This line ensures data is present on the helper!
-        $(ui.helper).data('op', op);
+        $(ui.helper).addClass('op'); // ENSURE CLASS EXISTS ON CLONE
+        $(ui.helper).data('op', op); // ENSURE DATA EXISTS ON CLONE
       }
     });
   }
