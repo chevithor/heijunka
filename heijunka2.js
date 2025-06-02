@@ -45,6 +45,8 @@ function minutosDesdeInicio(fechaStr) {
   return (fecha - START_TIME) / 60000;
 }
 
+// ... (keep everything before crearCentro the same)
+
 function crearCentro(nombre) {
   const div = $('<div class="centro" data-centro="' + nombre + '">' +
                   '<div class="centro-label">' + nombre + '</div>' +
@@ -64,7 +66,6 @@ function crearCentro(nombre) {
     drop: function(event, ui) {
       const op = ui.helper.data('op');
       const centro = $(this).closest('.centro').data('centro');
-
       const receta = partes[op.parte].receta;
       const index = receta.indexOf(op.centro);
 
@@ -79,19 +80,54 @@ function crearCentro(nombre) {
         }
       }
 
+      // Calculate start time from drop
       const left = ui.offset.left - $(this).offset().left;
       const startMin = Math.round(left / PX_PER_MIN);
       const startDate = new Date(START_TIME.getTime() + startMin * 60000);
       op.horaInicio = startDate.toISOString();
 
       asignadas.add(op.id + '-' + op.centro);
-      $(this).append(crearOperacion(op));
+
+      // Remove old element, add new one (draggable in gantt)
       ui.helper.remove();
+
+      // Remove any existing op with same id in timeline (if moving)
+      $(this).find('.op').each(function() {
+        const dataOp = $(this).data('op');
+        if (dataOp && dataOp.id === op.id && dataOp.centro === op.centro) {
+          $(this).remove();
+        }
+      });
+
+      const newOpDiv = crearOperacion(op, false, true); // inGantt = true
+      $(this).append(newOpDiv);
+
+      // Show next operation in queue if it exists and not assigned
+      if (index + 1 < receta.length) {
+        const nextCentro = receta[index + 1];
+        const nextOp = findOperacion(op.id, nextCentro);
+        if (nextOp && !asignadas.has(op.id + '-' + nextCentro)) {
+          $('.queue').append(crearOperacion(nextOp, true));
+        }
+      }
     }
   });
 }
 
-function crearOperacion(op, isQueue = false) {
+// Helper to find operation by order id and centro
+function findOperacion(ordenId, centro) {
+  for (const orden of ordenes) {
+    if (orden.id === ordenId) {
+      for (const op of orden.operaciones) {
+        if (op.centro === centro) return op;
+      }
+    }
+  }
+  return null;
+}
+
+// inGantt: true if rendering inside gantt (so always draggable)
+function crearOperacion(op, isQueue = false, inGantt = false) {
   const receta = partes[op.parte].receta;
   const color = partes[op.parte].color;
   const id = op.id + '-' + op.centro;
@@ -115,8 +151,17 @@ function crearOperacion(op, isQueue = false) {
 
   $div.data('op', op);
 
-  if (!asignadas.has(id)) {
-    $div.draggable({ helper: 'clone', zIndex: 1000 });
+  // Always draggable in gantt; in queue only if not assigned
+  if (isQueue ? !asignadas.has(id) : true) {
+    $div.draggable({
+      helper: 'clone',
+      zIndex: 1000,
+      appendTo: 'body',
+      revert: 'invalid',
+      start: function(e, ui) {
+        $(ui.helper).css('opacity', 0.7);
+      }
+    });
   }
 
   return $div;
@@ -132,10 +177,12 @@ function cargarOrdenes() {
       const id = op.id + '-' + op.centro;
       if (op.horaInicio) {
         asignadas.add(id);
-        $(`[data-centro="\${op.centro}"] .timeline`).append(crearOperacion(op));
+        $(`[data-centro="${op.centro}"] .timeline`).append(crearOperacion(op, false, true));
       } else if (partes[op.parte].receta.indexOf(op.centro) === 0) {
-        // Solo la primera operaciÃ³n va a la queue
-        $('.queue').append(crearOperacion(op, true));
+        // Only first operation goes into queue if not assigned
+        if (!asignadas.has(id)) {
+          $('.queue').append(crearOperacion(op, true));
+        }
       }
     }
   }
