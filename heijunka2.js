@@ -14,8 +14,9 @@ const ordenes = [
     { centro: 'Corte', duracion: 60, horaInicio: '2024-01-01T06:30:00' },
     { centro: 'Soldadura', duracion: 45 },
     { centro: 'Pintura', duracion: 30 }
-  ]},
- /* { id: 1002, parte: 'PZA-B', cantidad: 8, operaciones: [
+  ]} 
+  /*,
+  { id: 1002, parte: 'PZA-B', cantidad: 8, operaciones: [
     { centro: 'Corte', duracion: 50, horaInicio: '2024-01-01T08:00:00' },
     { centro: 'Pintura', duracion: 35 }
   ]},
