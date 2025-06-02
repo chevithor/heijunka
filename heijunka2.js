@@ -22,7 +22,7 @@ const ordenes = [
   { id: 1003, parte: 'PZA-C', cantidad: 6, operaciones: [
     { centro: 'Corte', duracion: 55 },
     { centro: 'Soldadura', duracion: 40 }
-  ]},
+  ]}/*,
   { id: 1004, parte: 'PZA-B', cantidad: 12, operaciones: [
     { centro: 'Corte', duracion: 40 },
     { centro: 'Pintura', duracion: 45 }
@@ -35,7 +35,7 @@ const ordenes = [
   { id: 1006, parte: 'PZA-C', cantidad: 7, operaciones: [
     { centro: 'Corte', duracion: 45 },
     { centro: 'Soldadura', duracion: 40 }
-  ]}
+  ]}*/
 ];
 
 const asignadas = new Set();
