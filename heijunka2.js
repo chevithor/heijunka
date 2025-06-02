@@ -54,8 +54,9 @@ function sumarMinutos(fechaStr, minutos) {
 function crearCentro(nombre) {
   const div = $(`
     <div class="centro" data-centro="${nombre}" style="margin-bottom:32px;">
-      <div class="centro-label">${nombre}</div>
+      <div class="centro-label">${nombre} 
       <div class="timeline" style="position: relative; height: 100px; background: #f8f8f8; margin-bottom: 10px;"></div>
+      </div>
     </div>
   `);
   $('#gantt-timelines').append(div);
