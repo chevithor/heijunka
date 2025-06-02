@@ -50,6 +50,30 @@ function sumarMinutos(fechaStr, minutos) {
   return new Date(fecha.getTime() + minutos * 60000).toISOString();
 }
 
+function hayTraslape(centro, nuevaOp, nuevaHoraInicio) {
+  const nuevaHoraFin = new Date(new Date(nuevaHoraInicio).getTime() + nuevaOp.duracion * 60000);
+
+  let traslape = false;
+  $(`[data-centro="${centro}"] .timeline .op`).each(function() {
+    const opExistente = $(this).data('op');
+    if (
+      opExistente &&
+      opExistente.id !== nuevaOp.id // permitir reubicar la misma orden
+    ) {
+      const ini = new Date(opExistente.horaInicio);
+      const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
+      // ¿Se traslapan los intervalos?
+      if (
+        (nuevaHoraInicio < fin) && (nuevaHoraFin > ini)
+      ) {
+        traslape = true;
+        return false; // break .each
+      }
+    }
+  });
+  return traslape;
+}
+
 // Crea la estructura visual de cada centro y su timeline SOLAMENTE (no queue aquí)
 function crearCentro(nombre) {
   const div = $(`
@@ -101,20 +125,31 @@ function crearCentro(nombre) {
 
         const left = event.pageX - $(this).offset().left;
         const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
-        const propuestaDropDate = new Date(START_TIME.getTime() + dropMin * 60000);
+        let propuestaDropDate = new Date(START_TIME.getTime() + dropMin * 60000);
 
         if (propuestaDropDate < minStart) {
           alert("No puedes programar antes de " + minStart.toLocaleTimeString() + " (15 min después de la operación previa). Se ajustará automáticamente.");
-          dropDate = minStart;
-        } else {
-          dropDate = propuestaDropDate;
+          propuestaDropDate = minStart;
         }
+        // VALIDACIÓN DE TRASLAPE
+        if (hayTraslape(centro, op, propuestaDropDate)) {
+          alert('No se puede agendar aquí: se empalma con otra orden ya despachada en este centro.');
+          return;
+        }
+        dropDate = propuestaDropDate;
         op.horaInicio = dropDate.toISOString();
       } else {
         // Primera operación: libre
         const left = event.pageX - $(this).offset().left;
         const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
-        dropDate = new Date(START_TIME.getTime() + dropMin * 60000);
+        let propuestaDropDate = new Date(START_TIME.getTime() + dropMin * 60000);
+
+        // VALIDACIÓN DE TRASLAPE
+        if (hayTraslape(centro, op, propuestaDropDate)) {
+          alert('No se puede agendar aquí: se empalma con otra orden ya despachada en este centro.');
+          return;
+        }
+        dropDate = propuestaDropDate;
         op.horaInicio = dropDate.toISOString();
       }
 
