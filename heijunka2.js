@@ -203,8 +203,6 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
       marginBottom: '8px',
       position: 'static',
       width: width + 'px',
-      minWidth: '65px',
-      maxWidth: '350px'
     });
   } else {
     $div.css({
@@ -213,8 +211,7 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
       opacity: 1,
       left: op.horaInicio ? (minutosDesdeInicio(op.horaInicio) * PX_PER_MIN) + 'px' : 0,
       position: 'absolute',
-      minWidth: '65px',
-      maxWidth: '350px'
+
     });
   }
   $div.data('op', op);
