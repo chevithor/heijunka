@@ -50,21 +50,29 @@ function sumarMinutos(fechaStr, minutos) {
   return new Date(fecha.getTime() + minutos * 60000).toISOString();
 }
 
+// Crea la estructura visual de cada centro, su timeline y su queue de primeras operaciones
 function crearCentro(nombre) {
-  const div = $('<div class="centro" data-centro="' + nombre + '">' +
-                  '<div class="centro-label">' + nombre + '</div>' +
-                  '<div class="timeline"></div>' +
-                '</div>');
+  const div = $(`
+    <div class="centro" data-centro="${nombre}" style="display: flex; align-items: flex-start;">
+      <div style="flex: 1 1 auto;">
+        <div class="centro-label">${nombre}</div>
+        <div class="timeline" style="position: relative; height: 100px; background: #f8f8f8; margin-bottom: 10px;"></div>
+      </div>
+      <div class="queue-centro" data-centro-queue="${nombre}" style="min-width: 140px; margin-left: 12px;">
+        <div class="queue-title" style="font-size: 12px; text-align: center; margin-bottom: 4px; color: #444;">Queue</div>
+        <div class="queue-list"></div>
+      </div>
+    </div>
+  `);
   $('#gantt').append(div);
 
   const lineaTiempo = div.find('.timeline');
-for (let h = 0; h < 24; h++) {
-  const hora = new Date(START_TIME.getTime() + h * 60 * 60000);
-  const left = h * 60 * PX_PER_MIN;
-  // Mostrar hora y minutos reales
-  const label = hora.getHours().toString().padStart(2, '0') + ':' + hora.getMinutes().toString().padStart(2, '0');
-  lineaTiempo.append('<div class="hora" style="left: ' + left + 'px">' + label + '</div>');
-}
+  for (let h = 0; h < 24; h++) {
+    const hora = new Date(START_TIME.getTime() + h * 60 * 60000);
+    const left = h * 60 * PX_PER_MIN;
+    const label = hora.getHours().toString().padStart(2, '0') + ':' + hora.getMinutes().toString().padStart(2, '0');
+    lineaTiempo.append('<div class="hora" style="position: absolute; top: 0; left: ' + left + 'px; font-size:11px; color:#bbb;">' + label + '</div>');
+  }
 
   lineaTiempo.droppable({
     accept: '.op',
@@ -85,7 +93,7 @@ for (let h = 0; h < 24; h++) {
 
       if (op.centro !== centro) return;
 
-      // Validación: para operaciones subsecuentes, horaInicio >= horaInicio anterior + 15 min
+      let dropDate;
       if (index > 0) {
         const prevCentro = receta[index - 1];
         const prevOp = findOperacion(op.id, prevCentro);
@@ -94,12 +102,9 @@ for (let h = 0; h < 24; h++) {
           return;
         }
         const prevStart = new Date(prevOp.horaInicio);
-        const prevEnd = new Date(prevStart.getTime() + prevOp.duracion * 60000);
-        // La restricción es que la hora de inicio de la siguiente op debe ser al menos 15 min después de la hora de inicio de la anterior
         const minStart = new Date(prevStart.getTime() + GAP_MINUTES * 60000);
 
-        // Calcular hora del drop
-        const left = event.pageX - $(this).offset().left; // <-- sin offset de label
+        const left = event.pageX - $(this).offset().left;
         const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
         const propuestaDropDate = new Date(START_TIME.getTime() + dropMin * 60000);
 
@@ -112,9 +117,9 @@ for (let h = 0; h < 24; h++) {
         op.horaInicio = dropDate.toISOString();
       } else {
         // Primera operación: libre
-        const left = event.pageX - $(this).offset().left; // <-- sin offset de label
+        const left = event.pageX - $(this).offset().left;
         const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
-        const dropDate = new Date(START_TIME.getTime() + dropMin * 60000);
+        dropDate = new Date(START_TIME.getTime() + dropMin * 60000);
         op.horaInicio = dropDate.toISOString();
       }
 
@@ -128,17 +133,16 @@ for (let h = 0; h < 24; h++) {
         }
       });
 
-      // Remove from queue or previous timeline
+      // Remove from per-order queue or timeline
       ui.draggable.remove();
 
       const newOpDiv = crearOperacion(op, false, true); // inGantt = true
       $(this).append(newOpDiv);
 
-      /*/ Si es la primer operación, programar automáticamente el resto
+      // Si es la primer operación, programar automáticamente el resto
       if (index === 0) {
         programarSiguientes(op);
-      } */  
-      programarSiguientes(op);
+      }
     }
   });
 }
@@ -154,10 +158,6 @@ function findOperacion(ordenId, centro) {
   return null;
 }
 
-/**
- * Programa automáticamente las operaciones subsecuentes a partir de la que se acaba de agendar.
- * La hora de inicio de cada siguiente operación es la hora de inicio de la anterior + 15 minutos.
- */
 function programarSiguientes(op) {
   const receta = partes[op.parte].receta;
   let prevOp = op;
@@ -165,16 +165,12 @@ function programarSiguientes(op) {
     const nextCentro = receta[i];
     const nextOp = findOperacion(op.id, nextCentro);
     if (!nextOp) break;
-    // Hora de inicio: hora de inicio anterior + GAP_MINUTES
     const prevStart = new Date(prevOp.horaInicio);
-    const prevEnd = new Date(prevStart.getTime() + prevOp.duracion * 60000);
     const minStart = new Date(prevStart.getTime() + GAP_MINUTES * 60000);
-    nextOp.horaInicio = prevEnd.toISOString();
+    nextOp.horaInicio = minStart.toISOString();
     asignadas.add(nextOp.id + '-' + nextOp.centro);
 
-    // Pintar en Gantt
     const centroDiv = $(`[data-centro="${nextOp.centro}"] .timeline`);
-    // Eliminar cualquier op previa
     centroDiv.find('.op').each(function() {
       const dataOp = $(this).data('op');
       if (dataOp && dataOp.id === nextOp.id && dataOp.centro === nextOp.centro) {
@@ -193,9 +189,7 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
     return $('<div></div>');
   }
   const color = partes[op.parte].color;
-  const id = op.id + '-' + op.centro;
   const width = op.duracion * PX_PER_MIN;
-
   const horaTooltip = op.horaInicio ? 'Inicio: ' + new Date(op.horaInicio).toLocaleTimeString() : '';
   const contenido = '<div class="op" title="' + horaTooltip + '">' +
                     '<strong>Ord ' + op.id + '</strong><br>' +
@@ -204,7 +198,6 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
                     '</div>';
 
   const $div = $(contenido);
-
   $div.css({
     backgroundColor: color,
     width: width + 'px',
@@ -212,10 +205,8 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
     left: op.horaInicio ? (minutosDesdeInicio(op.horaInicio) * PX_PER_MIN) + 'px' : 0,
     position: 'absolute'
   });
-
   $div.data('op', op);
 
-  // Solo permitir drag si está en el queue o en Gantt (para mover)
   $div.draggable({
     helper: 'clone',
     zIndex: 1000,
@@ -232,9 +223,12 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
 }
 
 /**
- * Solo la primer operación de cada orden va al queue.
+ * Cada centro tiene su propio queue para primeras operaciones NO despachadas.
+ * El queue de cada centro muestra solo las primeras operaciones de cada orden que no han sido despachadas.
  */
 function cargarOrdenes() {
+  // Limpiar todos los queues por si recargas
+  $('.queue-list').empty();
   for (const orden of ordenes) {
     for (let i = 0; i < orden.operaciones.length; i++) {
       const op = orden.operaciones[i];
@@ -243,11 +237,12 @@ function cargarOrdenes() {
       op.cantidad = orden.cantidad;
       delete op.horaInicio; // Limpiar previo
     }
-    // Primer op visible en queue si no está asignada
+    // Primer op visible en el queue del centro correspondiente, si no está asignada
     const primerOp = orden.operaciones[0];
     const id = primerOp.id + '-' + primerOp.centro;
     if (!asignadas.has(id)) {
-      $('.queue').append(crearOperacion(primerOp, true));
+      const queueList = $(`[data-centro-queue="${primerOp.centro}"] .queue-list`);
+      queueList.append(crearOperacion(primerOp, true));
     }
     // Si tiene horaInicio (preprogramada), dibujar en gantt
     for (const op of orden.operaciones) {
@@ -260,6 +255,9 @@ function cargarOrdenes() {
 }
 
 $(function() {
+  if ($('#gantt').length === 0) {
+    $('body').append('<div id="gantt"></div>');
+  }
   CENTROS.forEach(crearCentro);
   cargarOrdenes();
 });
