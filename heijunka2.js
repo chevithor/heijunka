@@ -101,13 +101,13 @@ for (let h = 0; h < 24; h++) {
         // Calcular hora del drop
         const left = event.pageX - $(this).offset().left; // <-- sin offset de label
         const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
-        const dropDate = new Date(START_TIME.getTime() + dropMin * 60000);
+        const propuestaDropDate = new Date(START_TIME.getTime() + dropMin * 60000);
 
-        if (dropDate < minStart) {
-          alert("No puedes programar antes de " + minStart.toLocaleTimeString() + " (15 min después de la operación previa)");
-         // return;
-        const dropDate = new Date(prevStart.getTime() + GAP_MINUTES * 60000);
-        console.log(dropDate.toISOString());
+        if (propuestaDropDate < minStart) {
+          alert("No puedes programar antes de " + minStart.toLocaleTimeString() + " (15 min después de la operación previa). Se ajustará automáticamente.");
+          dropDate = minStart;
+        } else {
+          dropDate = propuestaDropDate;
         }
         op.horaInicio = dropDate.toISOString();
       } else {
