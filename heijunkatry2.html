@@ -2,105 +2,104 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Heijunka Drag & Drop</title>
+  <title>Heijunka Try 2</title>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
   <style>
     body {
-      font-family: sans-serif;
-      display: flex;
-      margin: 0;
-      padding: 10px;
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f7f7f7;
     }
-
-    .queue {
-      width: 220px;
-      background: #f0f0f0;
-      padding: 10px;
-      margin-right: 10px;
-      border-right: 1px solid #ccc;
+    #gantt {
+      margin-top: 30px;
+      width: 100%;
+      max-width: 1280px;
     }
-
-    .queue h3 {
-      margin-top: 0;
-    }
-
-    .queue .op {
-      margin-bottom: 10px;
-      opacity: 0.5;
-      cursor: move;
-    }
-
-    .gantt {
-      position: relative;
-      flex-grow: 1;
-      overflow-x: auto;
-    }
-
     .centro {
+      margin-bottom: 32px;
+      display: flex;
+      align-items: flex-start;
+    }
+    .centro-label {
+      font-size: 15px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #2c3e50;
+    }
+    .timeline {
       position: relative;
       height: 100px;
-      border-bottom: 1px solid #aaa;
-      margin-bottom: 10px;
+      background: #f8f8f8;
+      border: 1px solid #ddd;
+      margin-bottom: 4px;
+      min-width: 900px;
+      max-width: 1100px;
+      overflow-x: auto;
+      border-radius: 6px;
     }
-
-    .centro-label {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 80px;
-      height: 100%;
-      background: #ddd;
-      writing-mode: vertical-rl;
-      text-align: center;
-      font-weight: bold;
-      padding: 5px;
-      box-sizing: border-box;
-    }
-
-    .timeline {
-      margin-left: 80px;
-      height: 100%;
-      position: relative;
-      background: #f5f5f5;
-    }
-
-    .op {
-      position: absolute;
-      height: 80px;
-      color: white;
-      border-radius: 4px;
-      padding: 4px;
-      box-sizing: border-box;
-      font-size: 12px;
-      cursor: move;
-      transition: box-shadow 0.2s ease;
-    }
-
-    .op:hover,
-    .op:focus,
-    .op:active {
-      outline: none;
-      box-shadow: 0 0 8px 2px rgba(0,0,0,0.3);
-      z-index: 10;
-    }
-
     .hora {
       position: absolute;
       top: 0;
-      width: 60px;
-      height: 20px;
-      font-size: 10px;
-      border-left: 1px dashed #aaa;
-      text-align: left;
+      color: #bbb;
+      font-size: 11px;
+      border-left: 1px solid #eee;
+      height: 100%;
       padding-left: 2px;
+      pointer-events: none;
+    }
+    .op {
+      border-radius: 4px;
+      padding: 4px 7px 2px 7px;
+      font-size: 13px;
+      color: #fff;
+      cursor: grab;
+      border: 1px solid #9993;
+      box-shadow: 1px 2px 5px #0003;
+      position: absolute;
+      top: 28px;
+      min-height: 32px;
+      box-sizing: border-box;
+      min-width: 65px;
+      max-width: 350px;
+      pointer-events: auto;
+      transition: opacity 0.15s;
+      user-select: none;
+    }
+    .queue-centro {
+      min-width: 140px;
+      margin-left: 12px;
+      background: #f2f6fa;
+      border-radius: 6px;
+      border: 1px solid #b3c9e2;
+      padding: 4px 0 7px 0;
+      min-height: 80px;
+      box-sizing: border-box;
+      box-shadow: 1px 2px 5px #0002;
+    }
+    .queue-title {
+      font-size: 12px;
+      text-align: center;
+      margin-bottom: 4px;
+      color: #444;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    .queue-list {
+      min-height: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: stretch;
+      padding: 2px 4px;
     }
   </style>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 </head>
 <body>
-<div class="queue"><h3>Queue de Inicio</h3></div>
-<div class="gantt" id="gantt"></div>
-<script src="heijunka2.js"></script>
+  <h2>Heijunka Try 2</h2>
+  <div id="gantt"></div>
+  <!-- queue div is no longer used, per-center queues are now generated in JS -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+  <script src="heijunka2.js"></script>
 </body>
 </html>
-
