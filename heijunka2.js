@@ -144,8 +144,8 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
   const contenido = '<div class="op" title="' + horaTooltip + '">' +
                     '<strong>Ord ' + op.id + '</strong><br>' +
                     'Pza: ' + op.parte + '<br>' +
-                    'Qty: ' + op.cantidad +
-                    'Receta: ' + receta +
+                    'Qty: ' + op.cantidad + '<br>' +
+                    'Receta: ' + op.centro +
                     '</div>';
 
   const $div = $(contenido);
