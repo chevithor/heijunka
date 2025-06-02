@@ -134,10 +134,11 @@ function crearCentro(nombre) {
       const newOpDiv = crearOperacion(op, false, true); // inGantt = true
       $(this).append(newOpDiv);
 
-      // Si es la primer operación, programar automáticamente el resto
+      programarSiguientes(op);
+     /* // Si es la primer operación, programar automáticamente el resto
       if (index === 0) {
         programarSiguientes(op);
-      }
+      }*/
     }
   });
 }
