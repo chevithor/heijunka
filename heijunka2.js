@@ -45,8 +45,6 @@ function minutosDesdeInicio(fechaStr) {
   return (fecha - START_TIME) / 60000;
 }
 
-// ... (keep everything before crearCentro the same)
-
 function crearCentro(nombre) {
   const div = $('<div class="centro" data-centro="' + nombre + '">' +
                   '<div class="centro-label">' + nombre + '</div>' +
@@ -66,6 +64,10 @@ function crearCentro(nombre) {
     drop: function(event, ui) {
       const op = ui.helper.data('op');
       const centro = $(this).closest('.centro').data('centro');
+      if (!op.parte || !partes[op.parte]) {
+        alert("Operación sin parte válida.");
+        return;
+      }
       const receta = partes[op.parte].receta;
       const index = receta.indexOf(op.centro);
 
@@ -128,6 +130,10 @@ function findOperacion(ordenId, centro) {
 
 // inGantt: true if rendering inside gantt (so always draggable)
 function crearOperacion(op, isQueue = false, inGantt = false) {
+  if (!op.parte || !partes[op.parte]) {
+    console.error("Error: operación sin 'parte' válida", op);
+    return $('<div></div>');
+  }
   const receta = partes[op.parte].receta;
   const color = partes[op.parte].color;
   const id = op.id + '-' + op.centro;
