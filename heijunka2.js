@@ -161,7 +161,8 @@ function programarSiguientes(op) {
     // Hora de inicio: hora final anterior + GAP_MINUTES
     const prevStart = new Date(prevOp.horaInicio);
     const prevEnd = new Date(prevStart.getTime() + prevOp.duracion * 60000);
-    const minStart = new Date(prevEnd.getTime() + GAP_MINUTES * 60000);
+   // const minStart = new Date(prevEnd.getTime() + GAP_MINUTES * 60000);
+    const minStart = new Date(prevEnd.getTime());
     nextOp.horaInicio = minStart.toISOString();
     asignadas.add(nextOp.id + '-' + nextOp.centro);
 
