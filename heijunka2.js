@@ -1,6 +1,7 @@
 const CENTROS = ['Corte', 'Soldadura', 'Pintura'];
 const START_TIME = new Date('2024-01-01T06:30:00');
 const PX_PER_MIN = 2;
+const GAP_MINUTES = 15;
 
 const partes = {
   'PZA-A': { color: '#E74C3C', receta: ['Corte', 'Soldadura', 'Pintura'] },
@@ -44,6 +45,11 @@ function minutosDesdeInicio(fechaStr) {
   return (fecha - START_TIME) / 60000;
 }
 
+function sumarMinutos(fechaStr, minutos) {
+  const fecha = new Date(fechaStr);
+  return new Date(fecha.getTime() + minutos * 60000).toISOString();
+}
+
 function crearCentro(nombre) {
   const div = $('<div class="centro" data-centro="' + nombre + '">' +
                   '<div class="centro-label">' + nombre + '</div>' +
@@ -76,19 +82,36 @@ function crearCentro(nombre) {
       const index = receta.indexOf(op.centro);
 
       if (op.centro !== centro) return;
+
+      // Validación: para operaciones subsecuentes, no permitir programar antes de horaFinal + GAP_MINUTES
       if (index > 0) {
-        const prev = receta[index - 1];
-        if (!asignadas.has(op.id + '-' + prev)) {
-          alert('Primero debes despachar la operación anterior: ' + prev);
+        const prevCentro = receta[index - 1];
+        const prevOp = findOperacion(op.id, prevCentro);
+        if (!prevOp || !prevOp.horaInicio) {
+          alert('Primero debes despachar la operación anterior: ' + prevCentro);
           return;
         }
-      }
+        const prevStart = new Date(prevOp.horaInicio);
+        const prevEnd = new Date(prevStart.getTime() + prevOp.duracion * 60000);
+        const minStart = new Date(prevEnd.getTime() + GAP_MINUTES * 60000);
 
-      // Calculate start time from drop position
-      const left = event.pageX - $(this).offset().left - 80; // 80px centro-label
-      const startMin = Math.max(0, Math.round(left / PX_PER_MIN));
-      const startDate = new Date(START_TIME.getTime() + startMin * 60000);
-      op.horaInicio = startDate.toISOString();
+        // Calcular hora del drop
+        const left = event.pageX - $(this).offset().left - 80; // 80px centro-label
+        const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
+        const dropDate = new Date(START_TIME.getTime() + dropMin * 60000);
+
+        if (dropDate < minStart) {
+          alert("No puedes programar antes de " + minStart.toLocaleTimeString() + " (15 min después de la operación previa)");
+          return;
+        }
+        op.horaInicio = dropDate.toISOString();
+      } else {
+        // Primera operación: libre
+        const left = event.pageX - $(this).offset().left - 80;
+        const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
+        const dropDate = new Date(START_TIME.getTime() + dropMin * 60000);
+        op.horaInicio = dropDate.toISOString();
+      }
 
       asignadas.add(op.id + '-' + op.centro);
 
@@ -106,13 +129,9 @@ function crearCentro(nombre) {
       const newOpDiv = crearOperacion(op, false, true); // inGantt = true
       $(this).append(newOpDiv);
 
-      // Show next operation in queue if it exists and not assigned
-      if (index + 1 < receta.length) {
-        const nextCentro = receta[index + 1];
-        const nextOp = findOperacion(op.id, nextCentro);
-        if (nextOp && !asignadas.has(op.id + '-' + nextCentro)) {
-          $('.queue').append(crearOperacion(nextOp, true));
-        }
+      // Si es la primer operación, programar automáticamente el resto
+      if (index === 0) {
+        programarSiguientes(op);
       }
     }
   });
@@ -129,13 +148,43 @@ function findOperacion(ordenId, centro) {
   return null;
 }
 
+/**
+ * Programa automáticamente las operaciones subsecuentes a partir de la que se acaba de agendar.
+ */
+function programarSiguientes(op) {
+  const receta = partes[op.parte].receta;
+  let prevOp = op;
+  for (let i = receta.indexOf(op.centro) + 1; i < receta.length; i++) {
+    const nextCentro = receta[i];
+    const nextOp = findOperacion(op.id, nextCentro);
+    if (!nextOp) break;
+    // Hora de inicio: hora final anterior + GAP_MINUTES
+    const prevStart = new Date(prevOp.horaInicio);
+    const prevEnd = new Date(prevStart.getTime() + prevOp.duracion * 60000);
+    const minStart = new Date(prevEnd.getTime() + GAP_MINUTES * 60000);
+    nextOp.horaInicio = minStart.toISOString();
+    asignadas.add(nextOp.id + '-' + nextOp.centro);
+
+    // Pintar en Gantt
+    const centroDiv = $(`[data-centro="${nextOp.centro}"] .timeline`);
+    // Eliminar cualquier op previa
+    centroDiv.find('.op').each(function() {
+      const dataOp = $(this).data('op');
+      if (dataOp && dataOp.id === nextOp.id && dataOp.centro === nextOp.centro) {
+        $(this).remove();
+      }
+    });
+    centroDiv.append(crearOperacion(nextOp, false, true));
+    prevOp = nextOp;
+  }
+}
+
 // inGantt: true if rendering inside gantt (so always draggable)
 function crearOperacion(op, isQueue = false, inGantt = false) {
   if (!op.parte || !partes[op.parte]) {
     console.error("Error: operación sin 'parte' válida", op);
     return $('<div></div>');
   }
-  const receta = partes[op.parte].receta;
   const color = partes[op.parte].color;
   const id = op.id + '-' + op.centro;
   const width = op.duracion * PX_PER_MIN;
@@ -144,8 +193,7 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
   const contenido = '<div class="op" title="' + horaTooltip + '">' +
                     '<strong>Ord ' + op.id + '</strong><br>' +
                     'Pza: ' + op.parte + '<br>' +
-                    'Qty: ' + op.cantidad + '<br>' +
-                    'Receta: ' + op.centro +
+                    'Qty: ' + op.cantidad +
                     '</div>';
 
   const $div = $(contenido);
@@ -160,7 +208,7 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
 
   $div.data('op', op);
 
-  // Always draggable
+  // Solo permitir drag si está en el queue o en Gantt (para mover)
   $div.draggable({
     helper: 'clone',
     zIndex: 1000,
@@ -176,21 +224,29 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
   return $div;
 }
 
+/**
+ * Solo la primer operación de cada orden va al queue.
+ */
 function cargarOrdenes() {
   for (const orden of ordenes) {
-    for (const op of orden.operaciones) {
+    for (let i = 0; i < orden.operaciones.length; i++) {
+      const op = orden.operaciones[i];
       op.id = orden.id;
       op.parte = orden.parte;
       op.cantidad = orden.cantidad;
-
-      const id = op.id + '-' + op.centro;
+      delete op.horaInicio; // Limpiar previo
+    }
+    // Primer op visible en queue si no está asignada
+    const primerOp = orden.operaciones[0];
+    const id = primerOp.id + '-' + primerOp.centro;
+    if (!asignadas.has(id)) {
+      $('.queue').append(crearOperacion(primerOp, true));
+    }
+    // Si tiene horaInicio (preprogramada), dibujar en gantt
+    for (const op of orden.operaciones) {
       if (op.horaInicio) {
-        asignadas.add(id);
+        asignadas.add(op.id + '-' + op.centro);
         $(`[data-centro="${op.centro}"] .timeline`).append(crearOperacion(op, false, true));
-      } else if (partes[op.parte].receta.indexOf(op.centro) === 0) {
-        if (!asignadas.has(id)) {
-          $('.queue').append(crearOperacion(op, true));
-        }
       }
     }
   }
