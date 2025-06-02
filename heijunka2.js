@@ -1,6 +1,6 @@
 const CENTROS = ['Corte', 'Soldadura', 'Pintura'];
 const START_TIME = new Date('2024-01-01T06:30:00');
-const PX_PER_MIN = 1;
+const PX_PER_MIN = 2;
 const GAP_MINUTES = 15;
 
 const partes = {
@@ -208,6 +208,7 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
   $div.css({
     backgroundColor: color,
     width: width + 'px',
+    bottom:  '02 px',
     opacity: isQueue ? 0.5 : 1,
     left: op.horaInicio ? (minutosDesdeInicio(op.horaInicio) * PX_PER_MIN) + 'px' : 0,
     position: 'absolute'
