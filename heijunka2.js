@@ -83,7 +83,7 @@ function crearCentro(nombre) {
 
       if (op.centro !== centro) return;
 
-      // Validación: para operaciones subsecuentes, no permitir programar antes de horaInicial anterior + GAP_MINUTES
+      // Validación: para operaciones subsecuentes, no permitir programar antes de horaFinal + GAP_MINUTES
       if (index > 0) {
         const prevCentro = receta[index - 1];
         const prevOp = findOperacion(op.id, prevCentro);
@@ -93,7 +93,7 @@ function crearCentro(nombre) {
         }
         const prevStart = new Date(prevOp.horaInicio);
         const prevEnd = new Date(prevStart.getTime() + prevOp.duracion * 60000);
-        const minStart = new Date(prevStart.getTime() + GAP_MINUTES * 60000);
+        const minStart = new Date(prevEnd.getTime() + GAP_MINUTES * 60000);
 
         // Calcular hora del drop
         const left = event.pageX - $(this).offset().left - 80; // 80px centro-label
@@ -101,7 +101,7 @@ function crearCentro(nombre) {
         const dropDate = new Date(START_TIME.getTime() + dropMin * 60000);
 
         if (dropDate < minStart) {
-          alert("No puedes programar antes de " + minStart.toLocaleTimeString() + " (15 min después del inicio de la operación previa)");
+          alert("No puedes programar antes de " + minStart.toLocaleTimeString() + " (15 min después de la operación previa)");
           return;
         }
         op.horaInicio = dropDate.toISOString();
@@ -161,8 +161,7 @@ function programarSiguientes(op) {
     // Hora de inicio: hora final anterior + GAP_MINUTES
     const prevStart = new Date(prevOp.horaInicio);
     const prevEnd = new Date(prevStart.getTime() + prevOp.duracion * 60000);
-   // const minStart = new Date(prevEnd.getTime() + GAP_MINUTES * 60000);
-    const minStart = new Date(prevEnd.getTime());
+    const minStart = new Date(prevEnd.getTime() + GAP_MINUTES * 60000);
     nextOp.horaInicio = minStart.toISOString();
     asignadas.add(nextOp.id + '-' + nextOp.centro);
 
