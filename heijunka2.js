@@ -105,7 +105,8 @@ for (let h = 0; h < 24; h++) {
 
         if (dropDate < minStart) {
           alert("No puedes programar antes de " + minStart.toLocaleTimeString() + " (15 min después de la operación previa)");
-          return;
+         // return;
+        dropDate = minStart;
         }
         op.horaInicio = dropDate.toISOString();
       } else {
