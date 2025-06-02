@@ -58,11 +58,13 @@ function crearCentro(nombre) {
   $('#gantt').append(div);
 
   const lineaTiempo = div.find('.timeline');
-  for (let h = 0; h < 24; h++) {
-    const hora = new Date(START_TIME.getTime() + h * 60 * 60000);
-    const left = h * 60 * PX_PER_MIN;
-    lineaTiempo.append('<div class="hora" style="left: ' + left + 'px">' + hora.getHours() + ':00</div>');
-  }
+for (let h = 0; h < 24; h++) {
+  const hora = new Date(START_TIME.getTime() + h * 60 * 60000);
+  const left = h * 60 * PX_PER_MIN;
+  // Mostrar hora y minutos reales
+  const label = hora.getHours().toString().padStart(2, '0') + ':' + hora.getMinutes().toString().padStart(2, '0');
+  lineaTiempo.append('<div class="hora" style="left: ' + left + 'px">' + label + '</div>');
+}
 
   lineaTiempo.droppable({
     accept: '.op',
