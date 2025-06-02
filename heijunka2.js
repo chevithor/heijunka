@@ -1,4 +1,3 @@
-
 const CENTROS = ['Corte', 'Soldadura', 'Pintura'];
 const START_TIME = new Date('2024-01-01T06:30:00');
 const PX_PER_MIN = 2;
@@ -37,6 +36,7 @@ const ordenes = [
     { centro: 'Soldadura', duracion: 40 }
   ]}
 ];
+
 const asignadas = new Set();
 
 function minutosDesdeInicio(fechaStr) {
@@ -58,70 +58,66 @@ function crearCentro(nombre) {
     lineaTiempo.append('<div class="hora" style="left: ' + left + 'px">' + hora.getHours() + ':00</div>');
   }
 
- lineaTiempo.droppable({
-  accept: '.op',
-  greedy: true,
-  drop: function(event, ui) {
-    console.log("Dropped!");
-    const op = ui.helper.data('op');
-    if (!op) {
-      alert('Error interno: operación no encontrada. Intenta de nuevo.');
-      return;
-    }
-    if (!op.parte || !partes[op.parte]) {
-      alert("Operación sin parte válida.");
-      return;
-    }
-    const centro = $(this).closest('.centro').data('centro');
-    const receta = partes[op.parte].receta;
-    const index = receta.indexOf(op.centro);
-
-    if (op.centro !== centro) return;
-    if (asignadas.has(op.id + '-' + op.centro)) return;
-
-    if (index > 0) {
-      const prev = receta[index - 1];
-      if (!asignadas.has(op.id + '-' + prev)) {
-        alert('Primero debes despachar la operación anterior: ' + prev);
+  lineaTiempo.droppable({
+    accept: '.op',
+    greedy: true,
+    drop: function(event, ui) {
+      const op = ui.helper.data('op');
+      if (!op) {
+        alert('Error interno: operación no encontrada. Intenta de nuevo.');
         return;
       }
-    }
-
-    // Calculate start time from drop
-    const left = ui.offset.left - $(this).offset().left;
-    const startMin = Math.round(left / PX_PER_MIN);
-    const startDate = new Date(START_TIME.getTime() + startMin * 60000);
-    op.horaInicio = startDate.toISOString();
-
-    asignadas.add(op.id + '-' + op.centro);
-
-    // Remove the original from wherever it was dragged from (queue or timeline)
-    ui.draggable.remove();
-
-    // Remove any existing op with same id in timeline (if moving)
-    $(this).find('.op').each(function() {
-      const dataOp = $(this).data('op');
-      if (dataOp && dataOp.id === op.id && dataOp.centro === op.centro) {
-        $(this).remove();
+      if (!op.parte || !partes[op.parte]) {
+        alert("Operación sin parte válida.");
+        return;
       }
-    });
+      const centro = $(this).closest('.centro').data('centro');
+      const receta = partes[op.parte].receta;
+      const index = receta.indexOf(op.centro);
 
-    const newOpDiv = crearOperacion(op, false, true); // inGantt = true
-    $(this).append(newOpDiv);
+      if (op.centro !== centro) return;
+      if (index > 0) {
+        const prev = receta[index - 1];
+        if (!asignadas.has(op.id + '-' + prev)) {
+          alert('Primero debes despachar la operación anterior: ' + prev);
+          return;
+        }
+      }
 
-    // Show next operation in queue if it exists and not assigned
-    if (index + 1 < receta.length) {
-      const nextCentro = receta[index + 1];
-      const nextOp = findOperacion(op.id, nextCentro);
-      if (nextOp && !asignadas.has(op.id + '-' + nextCentro)) {
-        $('.queue').append(crearOperacion(nextOp, true));
+      // Calculate start time from drop position
+      const left = event.pageX - $(this).offset().left - 80; // 80px centro-label
+      const startMin = Math.max(0, Math.round(left / PX_PER_MIN));
+      const startDate = new Date(START_TIME.getTime() + startMin * 60000);
+      op.horaInicio = startDate.toISOString();
+
+      asignadas.add(op.id + '-' + op.centro);
+
+      // Remove any existing op with same id in timeline (if moving)
+      $(this).find('.op').each(function() {
+        const dataOp = $(this).data('op');
+        if (dataOp && dataOp.id === op.id && dataOp.centro === op.centro) {
+          $(this).remove();
+        }
+      });
+
+      // Remove from queue or previous timeline
+      ui.draggable.remove();
+
+      const newOpDiv = crearOperacion(op, false, true); // inGantt = true
+      $(this).append(newOpDiv);
+
+      // Show next operation in queue if it exists and not assigned
+      if (index + 1 < receta.length) {
+        const nextCentro = receta[index + 1];
+        const nextOp = findOperacion(op.id, nextCentro);
+        if (nextOp && !asignadas.has(op.id + '-' + nextCentro)) {
+          $('.queue').append(crearOperacion(nextOp, true));
+        }
       }
     }
-  }
-});
+  });
 }
 
-// Helper to find operation by order id and centro
 function findOperacion(ordenId, centro) {
   for (const orden of ordenes) {
     if (orden.id === ordenId) {
@@ -157,25 +153,24 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
     backgroundColor: color,
     width: width + 'px',
     opacity: isQueue ? 0.5 : 1,
-    left: op.horaInicio ? (minutosDesdeInicio(op.horaInicio) * PX_PER_MIN) + 'px' : 0
+    left: op.horaInicio ? (minutosDesdeInicio(op.horaInicio) * PX_PER_MIN) + 'px' : 0,
+    position: 'absolute'
   });
 
   $div.data('op', op);
 
-  // Always draggable in gantt; in queue only if not assigned
-  if (isQueue ? !asignadas.has(id) : true) {
-    $div.draggable({
-      helper: 'clone',
-      zIndex: 1000,
-      appendTo: 'body',
-      revert: 'invalid',
-      start: function(e, ui) {
-        $(ui.helper).css('opacity', 0.7);
-        $(ui.helper).addClass('op'); // ENSURE CLASS EXISTS ON CLONE
-        $(ui.helper).data('op', op); // ENSURE DATA EXISTS ON CLONE
-      }
-    });
-  }
+  // Always draggable
+  $div.draggable({
+    helper: 'clone',
+    zIndex: 1000,
+    appendTo: 'body',
+    revert: 'invalid',
+    start: function(e, ui) {
+      $(ui.helper).css('opacity', 0.7);
+      $(ui.helper).addClass('op');
+      $(ui.helper).data('op', op);
+    }
+  });
 
   return $div;
 }
@@ -192,7 +187,6 @@ function cargarOrdenes() {
         asignadas.add(id);
         $(`[data-centro="${op.centro}"] .timeline`).append(crearOperacion(op, false, true));
       } else if (partes[op.parte].receta.indexOf(op.centro) === 0) {
-        // Only first operation goes into queue if not assigned
         if (!asignadas.has(id)) {
           $('.queue').append(crearOperacion(op, true));
         }
