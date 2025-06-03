@@ -1,35 +1,35 @@
 const CENTROS = [
-  { wc: '7411', nombre: 'SMT Line_1: 1 Module single Reel' },
-  { wc: '7412', nombre: 'SMT Line_2: 3 Module single Reel' },
-  { wc: '7413', nombre: 'SMT Line_3: 1 Module Dual  Reel' },
-  { wc: '7414', nombre: 'SMT Line_4: 4 Modules Dual  Reel' },
-  { wc: '7415', nombre: 'SMT Line_5: 3 Modules Dual  Reel' },
-  { wc: '7416', nombre: 'SMT Line_6: 3 Modules Dual  Reel' },
-  { wc: '7417', nombre: 'SMT Line_7: 3 Modules  single Reel' },
-  { wc: '7457', nombre: 'SMT Line_8: 3 Modules  single Reel' }
+  { wc: 'WC7411', nombre: 'SMT Line_1: 1 Module single Reel' },
+  { wc: 'WC7412', nombre: 'SMT Line_2: 3 Module single Reel' },
+  { wc: 'WC7413', nombre: 'SMT Line_3: 1 Module Dual  Reel' },
+  { wc: 'WC7414', nombre: 'SMT Line_4: 4 Modules Dual  Reel' },
+  { wc: 'WC7415', nombre: 'SMT Line_5: 3 Modules Dual  Reel' },
+  { wc: 'WC7416', nombre: 'SMT Line_6: 3 Modules Dual  Reel' },
+  { wc: 'WC7417', nombre: 'SMT Line_7: 3 Modules  single Reel' },
+  { wc: 'WC7457', nombre: 'SMT Line_8: 3 Modules  single Reel' }
 ];
 const START_TIME = new Date('2024-01-01T06:30:00');
 const PX_PER_MIN = 2;
 const GAP_MINUTES = 15;
 
 const partes = {
-  'PZA-A': { color: '#E74C3C', receta: ['7411', '7416'] },
-  'PZA-B': { color: '#3498DB', receta: ['7412', '7417'] },
-  'PZA-C': { color: '#2ECC71', receta: ['7414', '7414'] }
+  'PZA-A': { color: '#E74C3C', receta: ['WC7411', 'WC7416'] },
+  'PZA-B': { color: '#3498DB', receta: ['WC7412', 'WC7417'] },
+  'PZA-C': { color: '#2ECC71', receta: ['WC7414', 'WC7414'] }
 };
 
 const ordenes = [
   { id: 1001, parte: 'PZA-A', cantidad: 100, operaciones: [
-    { centro: '7411', duracion: 60 },
-    { centro: '7416', duracion: 300 }
+    { centro: 'WC7411', duracion: 60 },
+    { centro: 'WC7416', duracion: 300 }
   ]},
   { id: 1002, parte: 'PZA-B', cantidad: 800, operaciones: [
-    { centro: '7412', duracion: 50 },
-    { centro: '7417', duracion: 135 }
+    { centro: 'WC7412', duracion: 50 },
+    { centro: 'WC7417', duracion: 135 }
   ]},
   { id: 1003, parte: 'PZA-C', cantidad: 1400, operaciones: [
-    { centro: '7414', duracion: 45 },
-    { centro: '7414', duracion: 180 }
+    { centro: 'WC7414', duracion: 45 },
+    { centro: 'WC7414', duracion: 180 }
   ]}
 ];
 
