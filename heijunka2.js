@@ -12,7 +12,6 @@ const START_TIME = new Date('2024-01-01T06:30:00');
 const PX_PER_MIN = 1;
 const GAP_MINUTES = 15;
 
-// Las recetas deben usarse con los WC (códigos) como nombres de centro de trabajo
 const partes = {
   'PZA-A': { color: '#E74C3C', receta: ['7411', '7416'] },
   'PZA-B': { color: '#3498DB', receta: ['7412', '7417'] },
@@ -41,19 +40,13 @@ function minutosDesdeInicio(fechaStr) {
   return (fecha - START_TIME) / 60000;
 }
 
-function sumarMinutos(fechaStr, minutos) {
-  const fecha = new Date(fechaStr);
-  return new Date(fecha.getTime() + minutos * 60000).toISOString();
-}
-
 function crearCentro(centroObj) {
   const nombre = centroObj.nombre;
   const wc = centroObj.wc;
   const div = $(`
     <div class="centro" data-centro="${wc}" style="margin-bottom:32px;">
-      <div class="centro-label">${wc} - ${nombre}
-      <div class="timeline" style="position: relative; height: 100px; background: #f8f8f8; margin-bottom: 10px;"></div>
-      </div>
+      <div class="centro-label">${wc} - ${nombre}</div>
+      <div class="timeline"></div>
     </div>
   `);
   $('#gantt-timelines').append(div);
@@ -63,14 +56,14 @@ function crearCentro(centroObj) {
     const hora = new Date(START_TIME.getTime() + h * 60 * 60000);
     const left = h * 60 * PX_PER_MIN;
     const label = hora.getHours().toString().padStart(2, '0') + ':' + hora.getMinutes().toString().padStart(2, '0');
-    lineaTiempo.append('<div class="hora" style="position: absolute; top: 0; left: ' + left + 'px; font-size:11px; color:#bbb;">' + label + '</div>');
+    lineaTiempo.append('<div class="hora" style="left:' + left + 'px;">' + label + '</div>');
   }
 
   lineaTiempo.droppable({
     accept: '.op',
     greedy: true,
     drop: function(event, ui) {
-      // OJO: jQuery UI clone helper NO copia .data(), así que lo copiamos en el start del draggable
+      // Copia el objeto op siempre en el helper
       const op = ui.helper.data('op');
       if (!op) {
         alert('Error interno: operación no encontrada. Intenta de nuevo.');
@@ -83,7 +76,6 @@ function crearCentro(centroObj) {
       const centro = $(this).closest('.centro').data('centro');
       const receta = partes[op.parte].receta;
       const index = receta.indexOf(op.centro);
-
       if (op.centro !== centro) return;
 
       let dropDate;
@@ -105,17 +97,13 @@ function crearCentro(centroObj) {
           propuestaDropDate = minStart;
         }
 
-        // AJUSTE POR TRASLAPE
+        // Traslape
         let nuevaHoraInicio = propuestaDropDate;
         let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
         let traslapes = [];
-
-        $(`[data-centro="${centro}"] .timeline .op`).each(function() {
+        $(this).find('.op').each(function() {
           const opExistente = $(this).data('op');
-          if (
-            opExistente &&
-            opExistente.id !== op.id // permitir reubicar la misma orden
-          ) {
+          if (opExistente && opExistente.id !== op.id) {
             const ini = new Date(opExistente.horaInicio);
             const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
             if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
@@ -123,11 +111,9 @@ function crearCentro(centroObj) {
             }
           }
         });
-
         if (traslapes.length > 0) {
           const maxFin = new Date(Math.max.apply(null, traslapes));
           nuevaHoraInicio = maxFin;
-          nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
         }
         dropDate = nuevaHoraInicio;
         op.horaInicio = dropDate.toISOString();
@@ -137,17 +123,13 @@ function crearCentro(centroObj) {
         const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
         let propuestaDropDate = new Date(START_TIME.getTime() + dropMin * 60000);
 
-        // AJUSTE POR TRASLAPE
+        // Traslape
         let nuevaHoraInicio = propuestaDropDate;
         let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
         let traslapes = [];
-
-        $(`[data-centro="${centro}"] .timeline .op`).each(function() {
+        $(this).find('.op').each(function() {
           const opExistente = $(this).data('op');
-          if (
-            opExistente &&
-            opExistente.id !== op.id
-          ) {
+          if (opExistente && opExistente.id !== op.id) {
             const ini = new Date(opExistente.horaInicio);
             const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
             if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
@@ -155,11 +137,9 @@ function crearCentro(centroObj) {
             }
           }
         });
-
         if (traslapes.length > 0) {
           const maxFin = new Date(Math.max.apply(null, traslapes));
           nuevaHoraInicio = maxFin;
-          nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
         }
         dropDate = nuevaHoraInicio;
         op.horaInicio = dropDate.toISOString();
@@ -167,7 +147,7 @@ function crearCentro(centroObj) {
 
       asignadas.add(op.id + '-' + op.centro);
 
-      // Remove any existing op with same id in timeline (if moving)
+      // Quita si ya estaba puesta
       $(this).find('.op').each(function() {
         const dataOp = $(this).data('op');
         if (dataOp && dataOp.id === op.id && dataOp.centro === op.centro) {
@@ -175,12 +155,10 @@ function crearCentro(centroObj) {
         }
       });
 
-      // Remove from per-order queue or timeline
       ui.draggable.remove();
 
       const newOpDiv = crearOperacion(op, false, true); // inGantt = true
       $(this).append(newOpDiv);
-
       programarSiguientes(op);
     }
   });
@@ -221,7 +199,6 @@ function programarSiguientes(op) {
   }
 }
 
-// inGantt: true if rendering inside gantt (so always draggable)
 function crearOperacion(op, isQueue = false, inGantt = false) {
   if (!op.parte || !partes[op.parte]) {
     console.error("Error: operación sin 'parte' válida", op);
@@ -238,7 +215,6 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
 
   const $div = $(contenido);
 
-  // Si es queue, posición estática. Si es Gantt, posición absoluta (alineado por left).
   if (isQueue) {
     $div.css({
       backgroundColor: color,
@@ -258,14 +234,13 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
   }
   $div.data('op', op);
 
-  // Hace arrastrable siempre, tanto en queue como en timeline
   $div.draggable({
     helper: 'clone',
     appendTo: 'body',
     revert: 'invalid',
     zIndex: 1000,
     start: function(e, ui) {
-      // Copia el .data('op') para que el droppable reciba el objeto correcto
+      // CRUCIAL: Copia el .data('op') para que el droppable lo reciba bien
       $(ui.helper).data('op', op);
       $(ui.helper).addClass('op');
       $(ui.helper).css('opacity', 0.7);
