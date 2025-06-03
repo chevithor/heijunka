@@ -241,7 +241,6 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
 
   const $div = $(contenido);
 
-  // Si es queue, posición estática. Si es Gantt, posición absoluta (alineado por left).
   if (isQueue) {
     $div.css({
       backgroundColor: color,
@@ -257,20 +256,21 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
       opacity: 1,
       left: op.horaInicio ? (minutosDesdeInicio(op.horaInicio) * PX_PER_MIN) + 'px' : 0,
       position: 'absolute',
-
     });
   }
   $div.data('op', op);
 
+  // Hace arrastrable siempre, tanto en queue como en timeline
   $div.draggable({
     helper: 'clone',
-    zIndex: 1000,
     appendTo: 'body',
     revert: 'invalid',
+    zIndex: 1000,
     start: function(e, ui) {
-      $(ui.helper).css('opacity', 0.7);
-      $(ui.helper).addClass('op');
+      // Copia el .data('op') para que el droppable reciba el objeto correcto
       $(ui.helper).data('op', op);
+      $(ui.helper).addClass('op');
+      $(ui.helper).css('opacity', 0.7);
     }
   });
 
