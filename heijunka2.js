@@ -68,16 +68,11 @@ const ordenes = [
 const asignadas = new Set();
 
 function minutosDesdeInicio(fechaStr) {
+  if (!fechaStr) return 0;
   const fecha = new Date(fechaStr);
   return (fecha - START_TIME) / 60000;
 }
 
-function sumarMinutos(fechaStr, minutos) {
-  const fecha = new Date(fechaStr);
-  return new Date(fecha.getTime() + minutos * 60000).toISOString();
-}
-
-// Busca la operación correcta en la receta aunque haya repetidos
 function findOperacion(ordenId, centro, recetaIndex) {
   for (const orden of ordenes) {
     if (orden.id === ordenId) {
@@ -99,22 +94,52 @@ function findOperacion(ordenId, centro, recetaIndex) {
   return null;
 }
 
-function crearCentro(CentroObj) {
+function crearCentro(centroObj) {
+  const wc = centroObj.wc;
+  const nombre = centroObj.nombre;
   const div = $(`
-    <div class="centro" data-centro="${CentroObj.wc}" style="margin-bottom:32px;">
-      <div class="centro-label">${CentroObj.wc} - ${CentroObj.nombre} 
-      <div class="timeline" style="position: relative; height: 100px; background: #f8f8f8; margin-bottom: 10px;"></div>
+    <div class="centro" data-centro="${wc}">
+      <div class="centro-label">${wc} - ${nombre}</div>
+      <div class="centro-flex">
+        <div class="queue-centro" data-centro-queue="${wc}">
+          <div class="queue-title">Queue ${wc} - ${nombre}</div>
+          <div class="queue-list"></div>
+        </div>
+        <div class="timeline"></div>
       </div>
     </div>
   `);
   $('#gantt-timelines').append(div);
 
   const lineaTiempo = div.find('.timeline');
-  for (let h = 0; h < 24; h++) {
-    const hora = new Date(START_TIME.getTime() + h * 60 * 60000);
+  lineaTiempo.css({
+    width: TIMELINE_WIDTH + 'px',
+    minWidth: TIMELINE_WIDTH + 'px',
+    maxWidth: TIMELINE_WIDTH + 'px',
+    height: '100px',
+    background: '#f8f8f8',
+    border: '1px solid #eee',
+    position: 'relative',
+    marginBottom: '10px',
+    boxSizing: 'content-box',
+    overflow: 'auto'
+  });
+
+  // Vertical hour lines and hour labels
+  for (let h = 0; h < HOURS; h++) {
     const left = h * 60 * PX_PER_MIN;
+    lineaTiempo.append(`<div class="hora-vline" style="
+      position:absolute;
+      top:0;
+      left:${left}px;
+      width:1px;
+      height:100%;
+      background:#ccc;
+      z-index:0;
+      "></div>`);
+    const hora = new Date(START_TIME.getTime() + h * 60 * 60000);
     const label = hora.getHours().toString().padStart(2, '0') + ':' + hora.getMinutes().toString().padStart(2, '0');
-    lineaTiempo.append('<div class="hora" style="position: absolute; top: 0; left: ' + left + 'px; font-size:11px; color:#bbb;">' + label + '</div>');
+    lineaTiempo.append('<div class="hora" style="left:' + left + 'px; top:0; z-index:2; background:#f8f8f8cc; padding:0 2px; position:absolute;">' + label + '</div>');
   }
 
   lineaTiempo.droppable({
@@ -133,11 +158,10 @@ function crearCentro(CentroObj) {
       const centro = $(this).closest('.centro').data('centro');
       const receta = partes[op.parte].receta;
 
-      // Encontrar recetaIndex correcto (para soportar centros repetidos en receta)
+      // Encontrar el índice correcto en la receta para este op (por si hay centros repetidos)
       let recetaIndex = 0, count = 0;
       for (let i = 0; i < receta.length; i++) {
         if (receta[i] === op.centro) {
-          // Buscar la ocurrencia de operaciones
           if (ordenes.find(o => o.id === op.id).operaciones.indexOf(op) === count) {
             recetaIndex = i; break;
           }
@@ -186,7 +210,6 @@ function crearCentro(CentroObj) {
         });
 
         if (traslapes.length > 0) {
-          // Si hay traslapes, programa la orden al final del mayor fin de los traslapes
           const maxFin = new Date(Math.max.apply(null, traslapes));
           nuevaHoraInicio = maxFin;
           nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
@@ -242,10 +265,8 @@ function crearCentro(CentroObj) {
         }
       });
 
-      // Remove from per-order queue or timeline
       ui.draggable.remove();
-
-      const newOpDiv = crearOperacion(op, false, true); // inGantt = true
+      const newOpDiv = crearOperacion(op, false, true);
       $(this).append(newOpDiv);
 
       programarSiguientes(op, recetaIndex);
@@ -264,7 +285,6 @@ function programarSiguientes(op, recetaIndex) {
     const prevStart = new Date(prevOp.horaInicio);
     const minStart = new Date(prevStart.getTime() + prevOp.duracion * 60000);
 
-    // Ajuste por traslape igual que en el drop
     let nuevaHoraInicio = minStart;
     let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
     let traslapes = [];
@@ -289,7 +309,7 @@ function programarSiguientes(op, recetaIndex) {
     nextOp.horaInicio = nuevaHoraInicio.toISOString();
     asignadas.add(nextOp.id + '-' + nextOp.centro + '-' + i);
 
-    const centroDiv = $(`[data-centro="${nextCentro}"] .timeline`);
+    let centroDiv = $(`[data-centro="${nextCentro}"] .timeline`);
     centroDiv.find('.op').each(function() {
       const dataOp = $(this).data('op');
       if (
@@ -307,10 +327,6 @@ function programarSiguientes(op, recetaIndex) {
 }
 
 function crearOperacion(op, isQueue = false, inGantt = false) {
-  if (!op.parte || !partes[op.parte]) {
-    console.error("Error: operación sin 'parte' válida", op);
-    return $('<div></div>');
-  }
   const color = partes[op.parte].color;
   const width = op.duracion * PX_PER_MIN;
   const horaTooltip = op.horaInicio ? 'Inicio: ' + new Date(op.horaInicio).toLocaleTimeString() : '';
@@ -319,40 +335,23 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
                     'Pza: ' + op.parte + '<br>' +
                     'Qty: ' + op.cantidad +
                     '</div>';
-
   const $div = $(contenido);
-
   if (isQueue) {
-    $div.css({
-      backgroundColor: color,
-      opacity: 0.5,
-      marginBottom: '8px',
-      position: 'static',
-      width: width + 'px',
-    });
+    $div.css({ backgroundColor: color, opacity: 0.5, marginBottom: '8px', position: 'static', width: width + 'px' });
   } else {
-    $div.css({
-      backgroundColor: color,
-      width: width + 'px',
-      opacity: 1,
-      left: op.horaInicio ? (minutosDesdeInicio(op.horaInicio) * PX_PER_MIN) + 'px' : 0,
-      position: 'absolute',
-    });
+    $div.css({ backgroundColor: color, width: width + 'px', opacity: 1, left: op.horaInicio ? (minutosDesdeInicio(op.horaInicio) * PX_PER_MIN) + 'px' : 0, position: 'absolute' });
   }
   $div.data('op', op);
-
   $div.draggable({
     helper: 'clone',
-    zIndex: 1000,
     appendTo: 'body',
     revert: 'invalid',
+    zIndex: 1000,
     start: function(e, ui) {
-      $(ui.helper).css('opacity', 0.7);
-      $(ui.helper).addClass('op');
       $(ui.helper).data('op', op);
+      $(ui.helper).addClass('op').css('opacity', 0.7);
     }
   });
-
   return $div;
 }
 
