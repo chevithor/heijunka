@@ -139,43 +139,62 @@ lineaTiempo.droppable({
       let nuevaHoraInicio = propuestaDropDate;
       let dropDate;
 
-      if (recetaIndex > 0) {
+    if (recetaIndex > 0) {
         const prevCentro = receta[recetaIndex - 1];
         const prevOp = findOperacion(op.id, prevCentro, recetaIndex-1);
         if (!prevOp || !prevOp.horaInicio) {
-          alert('Primero debes programar la operación anterior: ' + prevCentro);
-          return;
+        alert('Primero debes programar la operación anterior: ' + prevCentro);
+        return;
         }
         const prevIni = new Date(prevOp.horaInicio);
         const prevFin = new Date(prevIni.getTime() + prevOp.duracion * 60000);
         const minStart = new Date(prevFin.getTime() + GAP_MINUTES * 60000);
 
-        // Si el usuario suelta antes del mínimo, lo movemos al mínimo
-        if (propuestaDropDate < minStart) {
-          nuevaHoraInicio = minStart;
-        }
+        // 1. Donde soltó el usuario, pero mínimo minStart
+        let candidato = propuestaDropDate < minStart ? minStart : propuestaDropDate;
 
-        let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
-
-        // Revisamos traslapes
+        // 2. ¿Hay traslape en 'candidato'?
+        let hayTraslape = false;
+        let nuevaHoraFin = new Date(candidato.getTime() + op.duracion * 60000);
         let traslapes = [];
+        $(this).find('.op').each(function() {
+        const opExistente = $(this).data('op');
+        if (opExistente && opExistente.id !== op.id) {
+          const ini = new Date(opExistente.horaInicio);
+          const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
+          if ((candidato < fin) && (nuevaHoraFin > ini)) {
+            traslapes.push({ini, fin});
+            hayTraslape = true;
+          }
+        }
+        });
+
+        if (hayTraslape) {
+        // 3. Buscar el primer hueco disponible después de 'candidato' y minStart
+        let timelineOps = [];
         $(this).find('.op').each(function() {
           const opExistente = $(this).data('op');
           if (opExistente && opExistente.id !== op.id) {
             const ini = new Date(opExistente.horaInicio);
             const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
-            if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
-              traslapes.push(fin);
-            }
+            timelineOps.push({ini, fin});
           }
         });
-        if (traslapes.length > 0) {
-          // Si hay traslape, lo movemos justo después del último fin
-          const maxFin = new Date(Math.max.apply(null, traslapes));
-          nuevaHoraInicio = maxFin;
-          nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
+        timelineOps.sort((a, b) => a.ini - b.ini);
+        // Buscar el primer hueco posible después de Math.max(candidato, minStart)
+        let testStart = new Date(Math.max(candidato.getTime(), minStart.getTime()));
+        while (true) {
+          let overlap = timelineOps.find(opi => 
+            (testStart < opi.fin) && (new Date(testStart.getTime() + op.duracion * 60000) > opi.ini)
+          );
+          if (!overlap) break;
+          // Saltar al final de la operación traslapada
+          testStart = new Date(opi.fin.getTime());
         }
-        dropDate = nuevaHoraInicio;
+        candidato = testStart;
+        }
+        dropDate = candidato;
+        op.horaInicio = dropDate.toISOString();
       } else {
         // Primera operación: libre, pero evita traslapes
         let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
