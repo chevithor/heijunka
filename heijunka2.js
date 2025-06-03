@@ -102,7 +102,7 @@ function crearCentro(centroObj) {
       <div class="centro-label">${wc} - ${nombre}</div>
       <div class="centro-flex">
         <div class="queue-centro" data-centro-queue="${wc}">
-          <div class="queue-title">Queue ${wc} - ${nombre}</div>
+          <div class="queue-title">Queue ${wc}</div>
           <div class="queue-list"></div>
         </div>
         <div class="timeline"></div>
