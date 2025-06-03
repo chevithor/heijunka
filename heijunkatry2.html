@@ -2,99 +2,28 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Heijunka Try 2</title>
-  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+  <title>SMT Gantt Board</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f7f7f7;
-    }
-    #gantt {
-      margin-top: 30px;
-      width: 100%;
-      max-width: 1280px;
-    }
-    .centro {
-      margin-bottom: 32px;
-      display: flex;
-      align-items: flex-start;
-    }
-    .centro-label {
-      font-size: 15px;
-      font-weight: bold;
-      margin-bottom: 5px;
-      color: #2c3e50;
-    }
-    .timeline {
-      position: relative;
-      height: 100px;
-      background: #f8f8f8;
-      border: 1px solid #ddd;
-      margin-bottom: 4px;
-      min-width: 1440px;
-      max-width: 1400px;
-      border-radius: 6px;
-    }
-    .hora {
-      position: absolute;
-      top: 0;
-      color: #bbb;
-      font-size: 11px;
-      border-left: 1px solid #eee;
-      height: 100%;
-      padding-left: 2px;
-      pointer-events: none;
-    }
-    .op {
-      border-radius: 4px;
-      padding: 4px 7px 2px 7px;
-      font-size: 11px;
-      color: #fff;
-      cursor: grab;
-      border: 1px solid #9993;
-      box-shadow: 1px 2px 5px #0003;
-      position: absolute;
-      top: 15px;
-      height: 85px;
-      box-sizing: border-box;
-      pointer-events: auto;
-      transition: opacity 0.15s;
-      user-select: none;
-    }
-    .queue-centro {
-      min-width: 140px;
-      margin-left: 12px;
-      background: #f2f6fa;
-      border-radius: 6px;
-      border: 1px solid #b3c9e2;
-      padding: 4px 0 7px 0;
-      min-height: 80px;
-      box-sizing: border-box;
-      box-shadow: 1px 2px 5px #0002;
-    }
-    .queue-title {
-      font-size: 12px;
-      text-align: center;
-      margin-bottom: 4px;
-      color: #444;
-      font-weight: bold;
-      letter-spacing: 1px;
-    }
-    .queue-list {
-      min-height: 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      align-items: stretch;
-      padding: 2px 4px;
-    }
+    body { font-family: Arial, sans-serif; }
+    #gantt-main { display: flex; align-items: flex-start; gap: 32px; }
+    #gantt-queues { min-width: 220px; }
+    .queue-centro { background: #f2f6fa; border-radius: 6px; border: 1px solid #b3c9e2; padding: 4px 0 7px 0; min-height: 80px; box-sizing: border-box; margin-bottom: 16px; box-shadow: 1px 2px 5px #0002; }
+    .queue-title { font-size: 12px; text-align: center; margin-bottom: 4px; color: #444; font-weight: bold; letter-spacing: 1px; }
+    .queue-list { display: flex; flex-direction: column; gap: 8px; align-items: stretch; padding: 2px 4px; }
+    .centro-label { font-weight: bold; margin-bottom: 4px; }
+    .timeline { position: relative; height: 100px; background: #f8f8f8; margin-bottom: 10px; border: 1px solid #eee; }
+    .op { color: #222; border-radius: 5px; border: 1px solid #bbb; box-shadow: 1px 2px 4px #0001; font-size: 13px; padding: 4px 6px; cursor: move; text-align: left; }
+    .op strong { font-size: 14px; }
+    .hora { position: absolute; top: 0; font-size: 11px; color: #bbb; }
   </style>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 </head>
 <body>
-  <h2>Heijunka Try 2</h2>
-  <div id="gantt"></div>
-  <!-- queue div is no longer used, per-center queues are now generated in JS -->
+  <h2>Gantt SMT</h2>
+  <div id="gantt-main">
+    <div id="gantt-queues"></div>
+    <div id="gantt-timelines" style="flex:1"></div>
+  </div>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
   <script src="heijunka2.js"></script>
