@@ -116,12 +116,6 @@ function crearCentro(centroObj) {
     width: TIMELINE_WIDTH + 'px',
     minWidth: TIMELINE_WIDTH + 'px',
     maxWidth: TIMELINE_WIDTH + 'px',
-    height: '100px',
-    background: '#f8f8f8',
-    border: '1px solid #eee',
-    position: 'relative',
-    marginBottom: '10px',
-    boxSizing: 'content-box',
     overflow: 'auto'
   });
 
