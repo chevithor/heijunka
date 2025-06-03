@@ -41,12 +41,22 @@ function minutosDesdeInicio(fechaStr) {
   return (fecha - START_TIME) / 60000;
 }
 
-// Busca la operación en la orden según id y centro
-function findOperacion(ordenId, centro) {
+// Busca la operación en la orden según id, centro y posición en receta
+function findOperacion(ordenId, centro, recetaIndex) {
   for (const orden of ordenes) {
     if (orden.id === ordenId) {
-      for (const op of orden.operaciones) {
-        if (op.centro === centro) return op;
+      // Contar cuántas veces aparece el centro en la receta antes de recetaIndex
+      let countInReceta = 0;
+      for (let i = 0; i <= recetaIndex; i++) {
+        if (partes[orden.parte].receta[i] === centro) countInReceta++;
+      }
+      // Buscar la aparición N°countInReceta de ese centro
+      let countInOps = 0;
+      for (let i = 0; i < orden.operaciones.length; i++) {
+        if (orden.operaciones[i].centro === centro) {
+          countInOps++;
+          if (countInOps === countInReceta) return orden.operaciones[i];
+        }
       }
     }
   }
@@ -56,7 +66,6 @@ function findOperacion(ordenId, centro) {
 function crearCentro(centroObj) {
   const wc = centroObj.wc;
   const nombre = centroObj.nombre;
-  // .centro > .centro-label + .centro-flex (.queue-centro + .timeline)
   const div = $(`
     <div class="centro" data-centro="${wc}">
       <div class="centro-label">${wc} - ${nombre}</div>
@@ -88,15 +97,28 @@ function crearCentro(centroObj) {
       const centro = $(this).closest('.centro').data('centro');
       if (op.centro !== centro) return;
 
-      // Determina el índice en la receta
+      // Busca la posición real en la receta
       const receta = partes[op.parte].receta;
-      const index = receta.indexOf(op.centro);
+      // ¿Cuál ocurrencia es esta de este centro?
+      let recetaIndex = 0;
+      let count = 0;
+      for (let i = 0; i < receta.length; i++) {
+        if (receta[i] === op.centro) {
+          // ¿Este op es la N°count+1 aparición?
+          // Usamos la posición en operaciones para identificarla
+          if (ordenes.find(o => o.id === op.id).operaciones.indexOf(op) === count)
+          {
+            recetaIndex = i; break;
+          }
+          count++;
+        }
+      }
 
       let dropDate;
-      if (index > 0) {
+      if (recetaIndex > 0) {
         // No es la primera operación: depende del fin de la anterior + GAP
-        const prevCentro = receta[index - 1];
-        const prevOp = findOperacion(op.id, prevCentro);
+        const prevCentro = receta[recetaIndex - 1];
+        const prevOp = findOperacion(op.id, prevCentro, recetaIndex-1);
         if (!prevOp || !prevOp.horaInicio) {
           alert('Primero debes programar la operación anterior: ' + prevCentro);
           return;
@@ -127,7 +149,6 @@ function crearCentro(centroObj) {
         if (traslapes.length > 0) {
           const maxFin = new Date(Math.max.apply(null, traslapes));
           nuevaHoraInicio = maxFin;
-          nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
         }
         dropDate = nuevaHoraInicio;
         op.horaInicio = dropDate.toISOString();
@@ -153,18 +174,18 @@ function crearCentro(centroObj) {
         if (traslapes.length > 0) {
           const maxFin = new Date(Math.max.apply(null, traslapes));
           nuevaHoraInicio = maxFin;
-          nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
         }
         dropDate = nuevaHoraInicio;
         op.horaInicio = dropDate.toISOString();
       }
 
-      asignadas.add(op.id + '-' + op.centro);
+      asignadas.add(op.id + '-' + op.centro + '-' + recetaIndex);
 
       // Elimina si ya estaba puesta
       $(this).find('.op').each(function() {
         const dataOp = $(this).data('op');
-        if (dataOp && dataOp.id === op.id && dataOp.centro === op.centro) {
+        // Compara por objeto, id, centro y posición
+        if (dataOp && dataOp.id === op.id && dataOp.centro === op.centro && ordenes.find(o => o.id === op.id).operaciones.indexOf(dataOp) === ordenes.find(o => o.id === op.id).operaciones.indexOf(op)) {
           $(this).remove();
         }
       });
@@ -174,17 +195,19 @@ function crearCentro(centroObj) {
       const newOpDiv = crearOperacion(op, false, true); // inGantt = true
       $(this).append(newOpDiv);
 
-      programarSiguientes(op);
+      programarSiguientes(op, recetaIndex);
     }
   });
 }
 
-function programarSiguientes(op) {
+// Ahora programarSiguientes también usa la posición real en la receta
+function programarSiguientes(op, recetaIndex) {
+  const orden = ordenes.find(o => o.id === op.id);
   const receta = partes[op.parte].receta;
   let prevOp = op;
-  for (let i = receta.indexOf(op.centro) + 1; i < receta.length; i++) {
+  for (let i = recetaIndex + 1; i < receta.length; i++) {
     const nextCentro = receta[i];
-    const nextOp = findOperacion(op.id, nextCentro);
+    const nextOp = findOperacion(op.id, nextCentro, i);
     if (!nextOp) break;
     // Calcula el inicio: fin anterior + GAP
     const prevStart = new Date(prevOp.horaInicio);
@@ -212,12 +235,12 @@ function programarSiguientes(op) {
       nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
     }
     nextOp.horaInicio = nuevaHoraInicio.toISOString();
-    asignadas.add(nextOp.id + '-' + nextOp.centro);
+    asignadas.add(nextOp.id + '-' + nextOp.centro + '-' + i);
 
     // Borra si ya existe
     centroDiv.find('.op').each(function() {
       const dataOp = $(this).data('op');
-      if (dataOp && dataOp.id === nextOp.id && dataOp.centro === nextOp.centro) {
+      if (dataOp && dataOp.id === nextOp.id && dataOp.centro === nextOp.centro && orden.operaciones.indexOf(dataOp) === orden.operaciones.indexOf(nextOp)) {
         $(this).remove();
       }
     });
@@ -263,14 +286,15 @@ function cargarOrdenes() {
       op.id = orden.id; op.parte = orden.parte; op.cantidad = orden.cantidad; delete op.horaInicio;
     }
     const primerOp = orden.operaciones[0];
-    const id = primerOp.id + '-' + primerOp.centro;
+    const id = primerOp.id + '-' + primerOp.centro + '-0';
     if (!asignadas.has(id)) {
       const queueList = $(`[data-centro-queue="${primerOp.centro}"] .queue-list`);
       queueList.append(crearOperacion(primerOp, true));
     }
-    for (const op of orden.operaciones) {
+    for (let i = 0; i < orden.operaciones.length; i++) {
+      const op = orden.operaciones[i];
       if (op.horaInicio) {
-        asignadas.add(op.id + '-' + op.centro);
+        asignadas.add(op.id + '-' + op.centro + '-' + i);
         $(`[data-centro="${op.centro}"] .timeline`).append(crearOperacion(op, false, true));
       }
     }
