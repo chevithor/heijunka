@@ -1,41 +1,37 @@
-const CENTROS = ['Corte', 'Soldadura', 'Pintura'];
+const CENTROS = [
+  { wc: '7411', nombre: 'SMT Line_1: 1 Module single Reel' },
+  { wc: '7412', nombre: 'SMT Line_2: 3 Module single Reel' },
+  { wc: '7413', nombre: 'SMT Line_3: 1 Module Dual  Reel' },
+  { wc: '7414', nombre: 'SMT Line_4: 4 Modules Dual  Reel' },
+  { wc: '7415', nombre: 'SMT Line_5: 3 Modules Dual  Reel' },
+  { wc: '7416', nombre: 'SMT Line_6: 3 Modules Dual  Reel' },
+  { wc: '7417', nombre: 'SMT Line_7: 3 Modules  single Reel' },
+  { wc: '7457', nombre: 'SMT Line_8: 3 Modules  single Reel' }
+];
 const START_TIME = new Date('2024-01-01T06:30:00');
 const PX_PER_MIN = 1;
 const GAP_MINUTES = 15;
 
+// Actualiza tus recetas y órdenes para que usen los códigos WC como centros
+// Por ejemplo:
 const partes = {
-  'PZA-A': { color: '#E74C3C', receta: ['Corte', 'Soldadura', 'Pintura'] },
-  'PZA-B': { color: '#3498DB', receta: ['Corte', 'Pintura'] },
-  'PZA-C': { color: '#2ECC71', receta: ['Corte', 'Soldadura'] }
+  'PZA-A': { color: '#E74C3C', receta: ['7411', '7412', '7413', '7414', '7415', '7416', '7417', '7457'] },
+  'PZA-B': { color: '#3498DB', receta: ['7411', '7412', '7413', '7414', '7415', '7416', '7417', '7457'] },
+  'PZA-C': { color: '#2ECC71', receta: ['7411', '7412', '7413', '7414', '7415', '7416', '7417', '7457'] }
 };
 
+// Actualiza tus órdenes de ejemplo para usar los WC
 const ordenes = [
   { id: 1001, parte: 'PZA-A', cantidad: 10, operaciones: [
-    { centro: 'Corte', duracion: 60, horaInicio: '2024-01-01T06:30:00' },
-    { centro: 'Soldadura', duracion: 45 },
-    { centro: 'Pintura', duracion: 30 }
-  ]} ,
+    { centro: '7411', duracion: 60, horaInicio: '2024-01-01T06:30:00' },
+    { centro: '7412', duracion: 45 },
+    { centro: '7413', duracion: 30 }
+  ]},
   { id: 1002, parte: 'PZA-B', cantidad: 8, operaciones: [
-    { centro: 'Corte', duracion: 50, horaInicio: '2024-01-01T08:00:00' },
-    { centro: 'Pintura', duracion: 35 }
+    { centro: '7411', duracion: 50, horaInicio: '2024-01-01T08:00:00' },
+    { centro: '7412', duracion: 35 }
   ]},
-  { id: 1003, parte: 'PZA-C', cantidad: 6, operaciones: [
-    { centro: 'Corte', duracion: 55 },
-    { centro: 'Soldadura', duracion: 40 }
-  ]},
-  { id: 1004, parte: 'PZA-B', cantidad: 12, operaciones: [
-    { centro: 'Corte', duracion: 40 },
-    { centro: 'Pintura', duracion: 45 }
-  ]},
-  { id: 1005, parte: 'PZA-A', cantidad: 5, operaciones: [
-    { centro: 'Corte', duracion: 50 },
-    { centro: 'Soldadura', duracion: 35 },
-    { centro: 'Pintura', duracion: 25 }
-  ]},
-  { id: 1006, parte: 'PZA-C', cantidad: 7, operaciones: [
-    { centro: 'Corte', duracion: 45 },
-    { centro: 'Soldadura', duracion: 40 }
-  ]}
+  // Continúa para tus otras órdenes...
 ];
 
 const asignadas = new Set();
@@ -50,11 +46,12 @@ function sumarMinutos(fechaStr, minutos) {
   return new Date(fecha.getTime() + minutos * 60000).toISOString();
 }
 
-// Crea la estructura visual de cada centro y su timeline SOLAMENTE (no queue aquí)
-function crearCentro(nombre) {
+function crearCentro(centroObj) {
+  const nombre = centroObj.nombre;
+  const wc = centroObj.wc;
   const div = $(`
-    <div class="centro" data-centro="${nombre}" style="margin-bottom:32px;">
-      <div class="centro-label">${nombre} 
+    <div class="centro" data-centro="${wc}" style="margin-bottom:32px;">
+      <div class="centro-label">${wc} - ${nombre}
       <div class="timeline" style="position: relative; height: 100px; background: #f8f8f8; margin-bottom: 10px;"></div>
       </div>
     </div>
@@ -127,7 +124,6 @@ function crearCentro(nombre) {
         });
 
         if (traslapes.length > 0) {
-          // Si hay traslapes, programa la orden al final del mayor fin de los traslapes
           const maxFin = new Date(Math.max.apply(null, traslapes));
           nuevaHoraInicio = maxFin;
           nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
@@ -185,10 +181,6 @@ function crearCentro(nombre) {
       $(this).append(newOpDiv);
 
       programarSiguientes(op);
-     /* // Si es la primer operación, programar automáticamente el resto
-      if (index === 0) {
-        programarSiguientes(op);
-      }*/
     }
   });
 }
@@ -319,11 +311,11 @@ $(function() {
     $('body').append('<div id="gantt-main" style="display: flex; align-items: flex-start; gap: 32px;"><div id="gantt-queues"></div><div id="gantt-timelines" style="flex:1"></div></div>');
   }
   // Crear los queues a la izquierda
-  for (const centro of CENTROS) {
-    if ($(`[data-centro-queue="${centro}"]`).length === 0) {
+  for (const centroObj of CENTROS) {
+    if ($(`[data-centro-queue="${centroObj.wc}"]`).length === 0) {
       $('#gantt-queues').append(`
-        <div class="queue-centro" data-centro-queue="${centro}" style="min-width: 140px; margin-bottom:16px; background: #f2f6fa; border-radius: 6px; border: 1px solid #b3c9e2; padding: 4px 0 7px 0; min-height: 80px; box-sizing: border-box; box-shadow: 1px 2px 5px #0002;">
-          <div class="queue-title" style="font-size: 12px; text-align: center; margin-bottom: 4px; color: #444; font-weight: bold; letter-spacing: 1px;">Queue ${centro}</div>
+        <div class="queue-centro" data-centro-queue="${centroObj.wc}" style="min-width: 140px; margin-bottom:16px; background: #f2f6fa; border-radius: 6px; border: 1px solid #b3c9e2; padding: 4px 0 7px 0; min-height: 80px; box-sizing: border-box; box-shadow: 1px 2px 5px #0002;">
+          <div class="queue-title" style="font-size: 12px; text-align: center; margin-bottom: 4px; color: #444; font-weight: bold; letter-spacing: 1px;">Queue ${centroObj.wc} - ${centroObj.nombre}</div>
           <div class="queue-list" style="display:flex; flex-direction:column; gap:8px; align-items:stretch; padding:2px 4px;"></div>
         </div>
       `);
