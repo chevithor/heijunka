@@ -41,10 +41,22 @@ function minutosDesdeInicio(fechaStr) {
   return (fecha - START_TIME) / 60000;
 }
 
+// Busca la operación en la orden según id y centro
+function findOperacion(ordenId, centro) {
+  for (const orden of ordenes) {
+    if (orden.id === ordenId) {
+      for (const op of orden.operaciones) {
+        if (op.centro === centro) return op;
+      }
+    }
+  }
+  return null;
+}
+
 function crearCentro(centroObj) {
   const wc = centroObj.wc;
   const nombre = centroObj.nombre;
-  // Structure: .centro > .centro-label + .centro-flex (.queue-centro + .timeline)
+  // .centro > .centro-label + .centro-flex (.queue-centro + .timeline)
   const div = $(`
     <div class="centro" data-centro="${wc}">
       <div class="centro-label">${wc} - ${nombre}</div>
@@ -76,23 +88,142 @@ function crearCentro(centroObj) {
       const centro = $(this).closest('.centro').data('centro');
       if (op.centro !== centro) return;
 
-      // Programa al inicio donde lo suelta
-      const left = event.pageX - $(this).offset().left;
-      const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
-      let propuestaDropDate = new Date(START_TIME.getTime() + dropMin * 60000);
-      op.horaInicio = propuestaDropDate.toISOString();
+      // Determina el índice en la receta
+      const receta = partes[op.parte].receta;
+      const index = receta.indexOf(op.centro);
 
-      // Elimina si ya existía la misma op en el timeline
+      let dropDate;
+      if (index > 0) {
+        // No es la primera operación: depende del fin de la anterior + GAP
+        const prevCentro = receta[index - 1];
+        const prevOp = findOperacion(op.id, prevCentro);
+        if (!prevOp || !prevOp.horaInicio) {
+          alert('Primero debes programar la operación anterior: ' + prevCentro);
+          return;
+        }
+        const prevIni = new Date(prevOp.horaInicio);
+        const prevFin = new Date(prevIni.getTime() + prevOp.duracion * 60000);
+        const minStart = new Date(prevFin.getTime() + GAP_MINUTES * 60000);
+
+        // El usuario puede dejar la op antes del mínimo, forzamos a después del mínimo
+        const left = event.pageX - $(this).offset().left;
+        const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
+        let propuestaDropDate = new Date(START_TIME.getTime() + dropMin * 60000);
+        let nuevaHoraInicio = propuestaDropDate < minStart ? minStart : propuestaDropDate;
+        let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
+
+        // Evita traslapes
+        let traslapes = [];
+        $(this).find('.op').each(function() {
+          const opExistente = $(this).data('op');
+          if (opExistente && opExistente.id !== op.id) {
+            const ini = new Date(opExistente.horaInicio);
+            const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
+            if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
+              traslapes.push(fin);
+            }
+          }
+        });
+        if (traslapes.length > 0) {
+          const maxFin = new Date(Math.max.apply(null, traslapes));
+          nuevaHoraInicio = maxFin;
+          nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
+        }
+        dropDate = nuevaHoraInicio;
+        op.horaInicio = dropDate.toISOString();
+      } else {
+        // Primera operación: libre, pero evita traslapes
+        const left = event.pageX - $(this).offset().left;
+        const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
+        let propuestaDropDate = new Date(START_TIME.getTime() + dropMin * 60000);
+        let nuevaHoraInicio = propuestaDropDate;
+        let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
+
+        let traslapes = [];
+        $(this).find('.op').each(function() {
+          const opExistente = $(this).data('op');
+          if (opExistente && opExistente.id !== op.id) {
+            const ini = new Date(opExistente.horaInicio);
+            const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
+            if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
+              traslapes.push(fin);
+            }
+          }
+        });
+        if (traslapes.length > 0) {
+          const maxFin = new Date(Math.max.apply(null, traslapes));
+          nuevaHoraInicio = maxFin;
+          nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
+        }
+        dropDate = nuevaHoraInicio;
+        op.horaInicio = dropDate.toISOString();
+      }
+
+      asignadas.add(op.id + '-' + op.centro);
+
+      // Elimina si ya estaba puesta
       $(this).find('.op').each(function() {
         const dataOp = $(this).data('op');
-        if (dataOp && dataOp.id === op.id && dataOp.centro === op.centro) $(this).remove();
+        if (dataOp && dataOp.id === op.id && dataOp.centro === op.centro) {
+          $(this).remove();
+        }
       });
 
       ui.draggable.remove();
+
       const newOpDiv = crearOperacion(op, false, true); // inGantt = true
       $(this).append(newOpDiv);
+
+      programarSiguientes(op);
     }
   });
+}
+
+function programarSiguientes(op) {
+  const receta = partes[op.parte].receta;
+  let prevOp = op;
+  for (let i = receta.indexOf(op.centro) + 1; i < receta.length; i++) {
+    const nextCentro = receta[i];
+    const nextOp = findOperacion(op.id, nextCentro);
+    if (!nextOp) break;
+    // Calcula el inicio: fin anterior + GAP
+    const prevStart = new Date(prevOp.horaInicio);
+    const prevFin = new Date(prevStart.getTime() + prevOp.duracion * 60000);
+    let minStart = new Date(prevFin.getTime() + GAP_MINUTES * 60000);
+
+    // Evita traslapes en este centro
+    let nuevaHoraInicio = minStart;
+    let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
+    let centroDiv = $(`[data-centro="${nextCentro}"] .timeline`);
+    let traslapes = [];
+    centroDiv.find('.op').each(function() {
+      const opExistente = $(this).data('op');
+      if (opExistente && opExistente.id !== nextOp.id) {
+        const ini = new Date(opExistente.horaInicio);
+        const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
+        if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
+          traslapes.push(fin);
+        }
+      }
+    });
+    if (traslapes.length > 0) {
+      const maxFin = new Date(Math.max.apply(null, traslapes));
+      nuevaHoraInicio = maxFin;
+      nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
+    }
+    nextOp.horaInicio = nuevaHoraInicio.toISOString();
+    asignadas.add(nextOp.id + '-' + nextOp.centro);
+
+    // Borra si ya existe
+    centroDiv.find('.op').each(function() {
+      const dataOp = $(this).data('op');
+      if (dataOp && dataOp.id === nextOp.id && dataOp.centro === nextOp.centro) {
+        $(this).remove();
+      }
+    });
+    centroDiv.append(crearOperacion(nextOp, false, true));
+    prevOp = nextOp;
+  }
 }
 
 function crearOperacion(op, isQueue = false, inGantt = false) {
