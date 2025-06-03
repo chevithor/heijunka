@@ -325,6 +325,6 @@ $(function() {
     }
   }
   // Crear los centros/timelines a la derecha
-  CENTROS.forEach(crearCentro);
+  CENTROS.wc.forEach(crearCentro);
   cargarOrdenes();
 });
