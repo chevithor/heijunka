@@ -116,43 +116,46 @@ function crearCentro(centroObj) {
 
       let dropDate;
       if (recetaIndex > 0) {
-        // No es la primera operación: depende del fin de la anterior + GAP
-        const prevCentro = receta[recetaIndex - 1];
-        const prevOp = findOperacion(op.id, prevCentro, recetaIndex-1);
-        if (!prevOp || !prevOp.horaInicio) {
-          alert('Primero debes programar la operación anterior: ' + prevCentro);
-          return;
-        }
-        const prevIni = new Date(prevOp.horaInicio);
-        const prevFin = new Date(prevIni.getTime() + prevOp.duracion * 60000);
-        const minStart = new Date(prevFin.getTime() + GAP_MINUTES * 60000);
-
-        // El usuario puede dejar la op antes del mínimo, forzamos a después del mínimo
-        const left = event.pageX - $(this).offset().left;
-        const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
-        let propuestaDropDate = new Date(START_TIME.getTime() + dropMin * 60000);
-        let nuevaHoraInicio = propuestaDropDate < minStart ? minStart : propuestaDropDate;
-        let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
-
-        // Evita traslapes
-        let traslapes = [];
-        $(this).find('.op').each(function() {
-          const opExistente = $(this).data('op');
-          if (opExistente && opExistente.id !== op.id) {
-            const ini = new Date(opExistente.horaInicio);
-            const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
-            if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
-              traslapes.push(fin);
-            }
+          const prevCentro = receta[recetaIndex - 1];
+          const prevOp = findOperacion(op.id, prevCentro, recetaIndex-1);
+          if (!prevOp || !prevOp.horaInicio) {
+            alert('Primero debes programar la operación anterior: ' + prevCentro);
+            return;
           }
-        });
-        if (traslapes.length > 0) {
-          const maxFin = new Date(Math.max.apply(null, traslapes));
-          nuevaHoraInicio = maxFin;
+          const prevIni = new Date(prevOp.horaInicio);
+          const prevFin = new Date(prevIni.getTime() + prevOp.duracion * 60000);
+          const minStart = new Date(prevFin.getTime() + GAP_MINUTES * 60000);
+
+          const left = event.pageX - $(this).offset().left;
+          let propuestaDropDate = new Date(START_TIME.getTime() + Math.max(0, Math.round(left / PX_PER_MIN)) * 60000);
+
+          // Si el usuario suelta antes del mínimo, lo movemos al mínimo
+          let nuevaHoraInicio = propuestaDropDate < minStart ? minStart : propuestaDropDate;
+          let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
+
+          // Evita traslapes solo si hay alguno en esa posición
+          let traslapes = [];
+          $(this).find('.op').each(function() {
+            const opExistente = $(this).data('op');
+            if (opExistente && opExistente.id !== op.id) {
+              const ini = new Date(opExistente.horaInicio);
+              const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
+              if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
+                traslapes.push(fin);
+              }
+            }
+          });
+          if (traslapes.length > 0) {
+            // Si hay traslape, lo movemos justo después del último fin
+            const maxFin = new Date(Math.max.apply(null, traslapes));
+            nuevaHoraInicio = maxFin;
+            nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
+          }
+          dropDate = nuevaHoraInicio;
+          op.horaInicio = dropDate.toISOString();
         }
-        dropDate = nuevaHoraInicio;
-        op.horaInicio = dropDate.toISOString();
-      } else {
+      
+      else {
         // Primera operación: libre, pero evita traslapes
         const left = event.pageX - $(this).offset().left;
         const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
