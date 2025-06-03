@@ -12,15 +12,13 @@ const START_TIME = new Date('2024-01-01T06:30:00');
 const PX_PER_MIN = 1;
 const GAP_MINUTES = 15;
 
-// Actualiza tus recetas y órdenes para que usen los códigos WC como centros
-// Por ejemplo:
+// Las recetas deben usarse con los WC (códigos) como nombres de centro de trabajo
 const partes = {
   'PZA-A': { color: '#E74C3C', receta: ['7411', '7416'] },
   'PZA-B': { color: '#3498DB', receta: ['7412', '7417'] },
   'PZA-C': { color: '#2ECC71', receta: ['7414', '7414'] }
 };
 
-// Actualiza tus órdenes de ejemplo para usar los WC
 const ordenes = [
   { id: 1001, parte: 'PZA-A', cantidad: 100, operaciones: [
     { centro: '7411', duracion: 60, horaInicio: '2024-01-01T06:30:00' },
@@ -30,12 +28,10 @@ const ordenes = [
     { centro: '7412', duracion: 50 },
     { centro: '7417', duracion: 135 }
   ]},
-
-    { id: 1003, parte: 'PZA-C', cantidad: 1400, operaciones: [
+  { id: 1003, parte: 'PZA-C', cantidad: 1400, operaciones: [
     { centro: '7414', duracion: 45 },
     { centro: '7414', duracion: 180 }
-  ]},
-  // Continúa para tus otras órdenes...
+  ]}
 ];
 
 const asignadas = new Set();
@@ -74,6 +70,7 @@ function crearCentro(centroObj) {
     accept: '.op',
     greedy: true,
     drop: function(event, ui) {
+      // OJO: jQuery UI clone helper NO copia .data(), así que lo copiamos en el start del draggable
       const op = ui.helper.data('op');
       if (!op) {
         alert('Error interno: operación no encontrada. Intenta de nuevo.');
@@ -241,6 +238,7 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
 
   const $div = $(contenido);
 
+  // Si es queue, posición estática. Si es Gantt, posición absoluta (alineado por left).
   if (isQueue) {
     $div.css({
       backgroundColor: color,
@@ -277,12 +275,7 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
   return $div;
 }
 
-/**
- * Los queues de primeras operaciones van alineados a la izquierda, uno por cada centro.
- * El queue de cada centro muestra solo las primeras operaciones de cada orden que no han sido despachadas.
- */
 function cargarOrdenes() {
-  // Limpiar todos los queues por si recargas
   $('.queue-list').empty();
   for (const orden of ordenes) {
     for (let i = 0; i < orden.operaciones.length; i++) {
@@ -292,14 +285,12 @@ function cargarOrdenes() {
       op.cantidad = orden.cantidad;
       delete op.horaInicio; // Limpiar previo
     }
-    // Primer op visible en el queue del centro correspondiente, si no está asignada
     const primerOp = orden.operaciones[0];
     const id = primerOp.id + '-' + primerOp.centro;
     if (!asignadas.has(id)) {
       const queueList = $(`[data-centro-queue="${primerOp.centro}"] .queue-list`);
       queueList.append(crearOperacion(primerOp, true));
     }
-    // Si tiene horaInicio (preprogramada), dibujar en gantt
     for (const op of orden.operaciones) {
       if (op.horaInicio) {
         asignadas.add(op.id + '-' + op.centro);
@@ -310,11 +301,9 @@ function cargarOrdenes() {
 }
 
 $(function() {
-  // Estructura: un #gantt-main que contiene #gantt-queues y #gantt-timelines alineados horizontalmente
   if ($('#gantt-main').length === 0) {
     $('body').append('<div id="gantt-main" style="display: flex; align-items: flex-start; gap: 32px;"><div id="gantt-queues"></div><div id="gantt-timelines" style="flex:1"></div></div>');
   }
-  // Crear los queues a la izquierda
   for (const centroObj of CENTROS) {
     if ($(`[data-centro-queue="${centroObj.wc}"]`).length === 0) {
       $('#gantt-queues').append(`
@@ -325,7 +314,6 @@ $(function() {
       `);
     }
   }
-  // Crear los centros/timelines a la derecha
   CENTROS.forEach(crearCentro);
   cargarOrdenes();
 });
