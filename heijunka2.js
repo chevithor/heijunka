@@ -99,10 +99,10 @@ function findOperacion(ordenId, centro, recetaIndex) {
   return null;
 }
 
-function crearCentro(nombre) {
+function crearCentro(CentroObj) {
   const div = $(`
-    <div class="centro" data-centro="${nombre}" style="margin-bottom:32px;">
-      <div class="centro-label">${nombre} 
+    <div class="centro" data-centro="${CentroObj.wc}" style="margin-bottom:32px;">
+      <div class="centro-label">${CentroObj.wc} - ${CentroObj.nombre} 
       <div class="timeline" style="position: relative; height: 100px; background: #f8f8f8; margin-bottom: 10px;"></div>
       </div>
     </div>
@@ -387,10 +387,10 @@ $(function() {
     $('body').append('<div id="gantt-main" style="display: flex; align-items: flex-start; gap: 32px;"><div id="gantt-queues"></div><div id="gantt-timelines" style="flex:1"></div></div>');
   }
   for (const centro of CENTROS) {
-    if ($(`[data-centro-queue="${centro}"]`).length === 0) {
+    if ($(`[data-centro-queue="${centro.wc}"]`).length === 0) {
       $('#gantt-queues').append(`
-        <div class="queue-centro" data-centro-queue="${centro}" style="min-width: 140px; margin-bottom:16px; background: #f2f6fa; border-radius: 6px; border: 1px solid #b3c9e2; padding: 4px 0 7px 0; min-height: 80px; box-sizing: border-box; box-shadow: 1px 2px 5px #0002;">
-          <div class="queue-title" style="font-size: 12px; text-align: center; margin-bottom: 4px; color: #444; font-weight: bold; letter-spacing: 1px;">Queue ${centro}</div>
+        <div class="queue-centro" data-centro-queue="${centro.wc}" style="min-width: 140px; margin-bottom:16px; background: #f2f6fa; border-radius: 6px; border: 1px solid #b3c9e2; padding: 4px 0 7px 0; min-height: 80px; box-sizing: border-box; box-shadow: 1px 2px 5px #0002;">
+          <div class="queue-title" style="font-size: 12px; text-align: center; margin-bottom: 4px; color: #444; font-weight: bold; letter-spacing: 1px;">Queue ${centro.wc}</div>
           <div class="queue-list" style="display:flex; flex-direction:column; gap:8px; align-items:stretch; padding:2px 4px;"></div>
         </div>
       `);
