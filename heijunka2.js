@@ -112,8 +112,7 @@ function crearCentro(centroObj) {
     const label = hora.getHours().toString().padStart(2, '0') + ':' + hora.getMinutes().toString().padStart(2, '0');
     lineaTiempo.append('<div class="hora" style="left:' + left + 'px; top:0; z-index:2; background:#f8f8f8cc; padding:0 2px; position:absolute;">' + label + '</div>');
   }
-
-  lineaTiempo.droppable({
+lineaTiempo.droppable({
     accept: '.op',
     greedy: true,
     drop: function(event, ui) {
@@ -124,7 +123,6 @@ function crearCentro(centroObj) {
 
       // Busca la posición real en la receta
       const receta = partes[op.parte].receta;
-      // ¿Cuál ocurrencia es esta de este centro?
       let recetaIndex = 0;
       let count = 0;
       for (let i = 0; i < receta.length; i++) {
@@ -136,9 +134,10 @@ function crearCentro(centroObj) {
         }
       }
 
-      let dropDate;
       const left = event.pageX - $(this).offset().left;
       let propuestaDropDate = new Date(START_TIME.getTime() + Math.max(0, Math.round(left / PX_PER_MIN)) * 60000);
+      let nuevaHoraInicio = propuestaDropDate;
+      let dropDate;
 
       if (recetaIndex > 0) {
         const prevCentro = receta[recetaIndex - 1];
@@ -152,10 +151,13 @@ function crearCentro(centroObj) {
         const minStart = new Date(prevFin.getTime() + GAP_MINUTES * 60000);
 
         // Si el usuario suelta antes del mínimo, lo movemos al mínimo
-        let nuevaHoraInicio = propuestaDropDate < minStart ? minStart : propuestaDropDate;
+        if (propuestaDropDate < minStart) {
+          nuevaHoraInicio = minStart;
+        }
+
         let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
 
-        // Evita traslapes solo si hay alguno en esa posición
+        // Revisamos traslapes
         let traslapes = [];
         $(this).find('.op').each(function() {
           const opExistente = $(this).data('op');
@@ -174,12 +176,9 @@ function crearCentro(centroObj) {
           nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
         }
         dropDate = nuevaHoraInicio;
-        op.horaInicio = dropDate.toISOString();
       } else {
         // Primera operación: libre, pero evita traslapes
-        let nuevaHoraInicio = propuestaDropDate;
         let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
-
         let traslapes = [];
         $(this).find('.op').each(function() {
           const opExistente = $(this).data('op');
@@ -194,12 +193,11 @@ function crearCentro(centroObj) {
         if (traslapes.length > 0) {
           const maxFin = new Date(Math.max.apply(null, traslapes));
           nuevaHoraInicio = maxFin;
-          nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
         }
         dropDate = nuevaHoraInicio;
-        op.horaInicio = dropDate.toISOString();
       }
 
+      op.horaInicio = dropDate.toISOString();
       asignadas.add(op.id + '-' + op.centro + '-' + recetaIndex);
 
       // Elimina si ya estaba puesta
@@ -211,13 +209,14 @@ function crearCentro(centroObj) {
       });
 
       ui.draggable.remove();
-
       const newOpDiv = crearOperacion(op, false, true);
       $(this).append(newOpDiv);
 
       programarSiguientes(op, recetaIndex);
     }
   });
+ 
+
 }
 
 function programarSiguientes(op, recetaIndex) {
