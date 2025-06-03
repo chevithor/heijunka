@@ -242,7 +242,7 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
                     '</div>';
 
   const $div = $(contenido);
-
+  $div.addClass('op');
   // Si es queue, posición estática. Si es Gantt, posición absoluta (alineado por left).
   if (isQueue) {
     $div.css({
@@ -263,7 +263,7 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
     });
   }
   $div.data('op', op);
-
+  
   $div.draggable({
     helper: 'clone',
     zIndex: 1000,
@@ -275,6 +275,7 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
       $(ui.helper).data('op', op);
     }
   });
+  
 
   return $div;
 }
@@ -333,3 +334,8 @@ $(function() {
   CENTROS.forEach(crearCentro);
   cargarOrdenes();
 });
+
+drop: function(event, ui) {
+  console.log("Drop event fired", event, ui);
+  ...
+}
