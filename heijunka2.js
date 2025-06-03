@@ -71,6 +71,7 @@ function crearCentro(centroObj) {
     accept: '.op',
     greedy: true,
     drop: function(event, ui) {
+      console.log("Drop event fired", event, ui);
       const op = ui.helper.data('op');
       if (!op) {
         alert('Error interno: operación no encontrada. Intenta de nuevo.');
@@ -334,8 +335,3 @@ $(function() {
   CENTROS.forEach(crearCentro);
   cargarOrdenes();
 });
-
-drop: function(event, ui) {
-  console.log("Drop event fired", event, ui);
-  ...
-}
