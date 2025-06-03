@@ -9,7 +9,7 @@ const CENTROS = [
   { wc: 'WC7457', nombre: 'SMT Line_8: 3 Modules  single Reel' }
 ];
 const START_TIME = new Date('2024-01-01T06:30:00');
-const PX_PER_MIN = 2;
+const PX_PER_MIN = 1;
 const GAP_MINUTES = 15;
 const HOURS = 24;
 const TIMELINE_WIDTH = HOURS * 60 * PX_PER_MIN;
