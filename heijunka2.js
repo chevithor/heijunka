@@ -112,48 +112,47 @@ function crearCentro(centroObj) {
     const label = hora.getHours().toString().padStart(2, '0') + ':' + hora.getMinutes().toString().padStart(2, '0');
     lineaTiempo.append('<div class="hora" style="left:' + left + 'px; top:0; z-index:2; background:#f8f8f8cc; padding:0 2px; position:absolute;">' + label + '</div>');
   }
-lineaTiempo.droppable({
-  accept: '.op',
-  greedy: true,
-  drop: function(event, ui) {
-    const op = ui.helper.data('op');
-    if (!op) { alert('Error interno: operación no encontrada.'); return; }
-    const centro = $(this).closest('.centro').data('centro');
-    if (op.centro !== centro) return;
 
-    // Busca la posición real en la receta
-    const receta = partes[op.parte].receta;
-    let recetaIndex = 0;
-    let count = 0;
-    for (let i = 0; i < receta.length; i++) {
-      if (receta[i] === op.centro) {
-        if (ordenes.find(o => o.id === op.id).operaciones.indexOf(op) === count) {
-          recetaIndex = i; break;
+  lineaTiempo.droppable({
+    accept: '.op',
+    greedy: true,
+    drop: function(event, ui) {
+      const op = ui.helper.data('op');
+      if (!op) { alert('Error interno: operación no encontrada.'); return; }
+      const centro = $(this).closest('.centro').data('centro');
+      if (op.centro !== centro) return;
+
+      // Encontrar recetaIndex correcto
+      const receta = partes[op.parte].receta;
+      let recetaIndex = 0;
+      let count = 0;
+      for (let i = 0; i < receta.length; i++) {
+        if (receta[i] === op.centro) {
+          if (ordenes.find(o => o.id === op.id).operaciones.indexOf(op) === count) {
+            recetaIndex = i; break;
+          }
+          count++;
         }
-        count++;
       }
-    }
 
-    const left = event.pageX - $(this).offset().left;
-    let propuestaDropDate = new Date(START_TIME.getTime() + Math.max(0, Math.round(left / PX_PER_MIN)) * 60000);
+      const left = event.pageX - $(this).offset().left;
+      let propuestaDropDate = new Date(START_TIME.getTime() + Math.max(0, Math.round(left / PX_PER_MIN)) * 60000);
 
-    let dropDate;
-    if (recetaIndex > 0) {
-      const prevCentro = receta[recetaIndex - 1];
-      const prevOp = findOperacion(op.id, prevCentro, recetaIndex-1);
-      if (!prevOp || !prevOp.horaInicio) {
-        alert('Primero debes programar la operación anterior: ' + prevCentro);
-        return;
+      // 1. Calcular minStart para recetaIndex > 0
+      let minStart = null;
+      if (recetaIndex > 0) {
+        const prevCentro = receta[recetaIndex - 1];
+        const prevOp = findOperacion(op.id, prevCentro, recetaIndex-1);
+        if (!prevOp || !prevOp.horaInicio) {
+          alert('Primero debes programar la operación anterior: ' + prevCentro);
+          return;
+        }
+        const prevIni = new Date(prevOp.horaInicio);
+        const prevFin = new Date(prevIni.getTime() + prevOp.duracion * 60000);
+        minStart = new Date(prevFin.getTime() + GAP_MINUTES * 60000);
       }
-      const prevIni = new Date(prevOp.horaInicio);
-      const prevFin = new Date(prevIni.getTime() + prevOp.duracion * 60000);
-      const minStart = new Date(prevFin.getTime() + GAP_MINUTES * 60000);
 
-      // El candidato inicial es el mayor entre donde soltó y minStart
-      let candidato = propuestaDropDate < minStart ? minStart : propuestaDropDate;
-      let candidatoFin = new Date(candidato.getTime() + op.duracion * 60000);
-
-      // Genera lista de intervalos ocupados
+      // 2. Recopilar todos los intervalos ocupados en la timeline (excluyendo la misma op)
       let timelineOps = [];
       $(this).find('.op').each(function() {
         const opExistente = $(this).data('op');
@@ -165,77 +164,62 @@ lineaTiempo.droppable({
       });
       timelineOps.sort((a, b) => a.ini - b.ini);
 
-      // ¿Está libre el hueco donde soltó?
-      let libre = timelineOps.every(opi => !(candidato < opi.fin && candidatoFin > opi.ini));
-      if (!libre) {
-        // Buscar el primer hueco libre después de candidato
-        let testStart = new Date(candidato.getTime());
-        outer: while (true) {
-          let testEnd = new Date(testStart.getTime() + op.duracion * 60000);
-          for (let i = 0; i < timelineOps.length; ++i) {
-            if (testStart < timelineOps[i].fin && testEnd > timelineOps[i].ini) {
-              testStart = new Date(timelineOps[i].fin.getTime());
-              continue outer;
-            }
-          }
-          // Encontramos hueco
-          candidato = testStart;
-          break;
+      // 3. Nueva lógica: buscar el hueco más cercano a la derecha de donde soltó, pero NUNCA antes de minStart
+      //    (si hay hueco donde soltó, ahí se queda; si no, busca el primer hueco posible)
+      let inicioDeseado = minStart && propuestaDropDate < minStart ? minStart : propuestaDropDate;
+      let finDeseado = new Date(inicioDeseado.getTime() + op.duracion * 60000);
+
+      // Buscar hueco sin traslapes
+      let nuevoInicio = inicioDeseado;
+      let nuevoFin = finDeseado;
+      let found = false;
+
+      // Recorremos los huecos entre operaciones programadas (o antes de la primera, o después de la última)
+      let t0 = minStart && minStart > inicioDeseado ? minStart : inicioDeseado;
+      let t1;
+      for (let i = 0; i <= timelineOps.length; i++) {
+        t1 = (i < timelineOps.length) ? timelineOps[i].ini : null;
+        let posibleInicio = t0;
+        if (minStart && posibleInicio < minStart) posibleInicio = minStart;
+        let posibleFin = new Date(posibleInicio.getTime() + op.duracion * 60000);
+        if (t1 && posibleFin > t1) {
+          t0 = timelineOps[i].fin;
+          continue;
         }
+        if (posibleInicio < inicioDeseado) {
+          if (i < timelineOps.length) {
+            t0 = timelineOps[i].fin;
+          }
+          continue;
+        }
+        nuevoInicio = posibleInicio;
+        nuevoFin = posibleFin;
+        found = true;
+        break;
       }
-      dropDate = candidato;
-    } else {
-      // Primera operación: igual lógica de traslapes pero sin minStart
-      let candidato = propuestaDropDate;
-      let candidatoFin = new Date(candidato.getTime() + op.duracion * 60000);
-      let timelineOps = [];
+      if (!found) {
+        nuevoInicio = minStart ? (timelineOps.length > 0 ? timelineOps[timelineOps.length-1].fin : minStart) : (timelineOps.length > 0 ? timelineOps[timelineOps.length-1].fin : inicioDeseado);
+        nuevoFin = new Date(nuevoInicio.getTime() + op.duracion * 60000);
+      }
+
+      op.horaInicio = nuevoInicio.toISOString();
+      asignadas.add(op.id + '-' + op.centro + '-' + recetaIndex);
+
+      // Elimina si ya estaba puesta
       $(this).find('.op').each(function() {
-        const opExistente = $(this).data('op');
-        if (opExistente && opExistente.id !== op.id) {
-          const ini = new Date(opExistente.horaInicio);
-          const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
-          timelineOps.push({ini, fin});
+        const dataOp = $(this).data('op');
+        if (dataOp && dataOp.id === op.id && dataOp.centro === op.centro && ordenes.find(o => o.id === op.id).operaciones.indexOf(dataOp) === ordenes.find(o => o.id === op.id).operaciones.indexOf(op)) {
+          $(this).remove();
         }
       });
-      timelineOps.sort((a, b) => a.ini - b.ini);
-      let libre = timelineOps.every(opi => !(candidato < opi.fin && candidatoFin > opi.ini));
-      if (!libre) {
-        let testStart = new Date(candidato.getTime());
-        outer: while (true) {
-          let testEnd = new Date(testStart.getTime() + op.duracion * 60000);
-          for (let i = 0; i < timelineOps.length; ++i) {
-            if (testStart < timelineOps[i].fin && testEnd > timelineOps[i].ini) {
-              testStart = new Date(timelineOps[i].fin.getTime());
-              continue outer;
-            }
-          }
-          candidato = testStart;
-          break;
-        }
-      }
-      dropDate = candidato;
+
+      ui.draggable.remove();
+      const newOpDiv = crearOperacion(op, false, true);
+      $(this).append(newOpDiv);
+
+      programarSiguientes(op, recetaIndex);
     }
-
-    op.horaInicio = dropDate.toISOString();
-    asignadas.add(op.id + '-' + op.centro + '-' + recetaIndex);
-
-    // Elimina si ya estaba puesta
-    $(this).find('.op').each(function() {
-      const dataOp = $(this).data('op');
-      if (dataOp && dataOp.id === op.id && dataOp.centro === op.centro && ordenes.find(o => o.id === op.id).operaciones.indexOf(dataOp) === ordenes.find(o => o.id === op.id).operaciones.indexOf(op)) {
-        $(this).remove();
-      }
-    });
-
-    ui.draggable.remove();
-    const newOpDiv = crearOperacion(op, false, true);
-    $(this).append(newOpDiv);
-
-    programarSiguientes(op, recetaIndex);
-  }
-});
- 
-
+  });
 }
 
 function programarSiguientes(op, recetaIndex) {
@@ -250,27 +234,46 @@ function programarSiguientes(op, recetaIndex) {
     const prevFin = new Date(prevStart.getTime() + prevOp.duracion * 60000);
     let minStart = new Date(prevFin.getTime() + GAP_MINUTES * 60000);
 
-    let nuevaHoraInicio = minStart;
-    let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
-    let centroDiv = $(`[data-centro="${nextCentro}"] .timeline`);
-    let traslapes = [];
-    centroDiv.find('.op').each(function() {
+    // Igual lógica de hueco más cercano
+    let timelineOps = [];
+    $(`[data-centro="${nextCentro}"] .timeline`).find('.op').each(function() {
       const opExistente = $(this).data('op');
       if (opExistente && opExistente.id !== nextOp.id) {
         const ini = new Date(opExistente.horaInicio);
         const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
-        if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
-          traslapes.push(fin);
-        }
+        timelineOps.push({ini, fin});
       }
     });
-    if (traslapes.length > 0) {
-      const maxFin = new Date(Math.max.apply(null, traslapes));
-      nuevaHoraInicio = maxFin;
-      nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
+    timelineOps.sort((a, b) => a.ini - b.ini);
+
+    let posibleInicio = minStart;
+    let posibleFin = new Date(posibleInicio.getTime() + nextOp.duracion * 60000);
+    let found = false;
+    let t0 = posibleInicio;
+    let t1;
+    for (let j = 0; j <= timelineOps.length; j++) {
+      t1 = (j < timelineOps.length) ? timelineOps[j].ini : null;
+      let iniTest = t0;
+      let finTest = new Date(iniTest.getTime() + nextOp.duracion * 60000);
+      if (t1 && finTest > t1) {
+        t0 = timelineOps[j].fin;
+        continue;
+      }
+      // Se queda en el primer hueco suficiente
+      posibleInicio = iniTest;
+      posibleFin = finTest;
+      found = true;
+      break;
     }
-    nextOp.horaInicio = nuevaHoraInicio.toISOString();
+    if (!found) {
+      posibleInicio = timelineOps.length > 0 ? timelineOps[timelineOps.length-1].fin : minStart;
+      posibleFin = new Date(posibleInicio.getTime() + nextOp.duracion * 60000);
+    }
+
+    nextOp.horaInicio = posibleInicio.toISOString();
     asignadas.add(nextOp.id + '-' + nextOp.centro + '-' + i);
+
+    let centroDiv = $(`[data-centro="${nextCentro}"] .timeline`);
     centroDiv.find('.op').each(function() {
       const dataOp = $(this).data('op');
       if (dataOp && dataOp.id === nextOp.id && dataOp.centro === nextOp.centro && orden.operaciones.indexOf(dataOp) === orden.operaciones.indexOf(nextOp)) {
