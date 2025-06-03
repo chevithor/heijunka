@@ -317,7 +317,7 @@ $(function() {
   for (const centro of CENTROS) {
     if ($(`[data-centro-queue="${centro.wc}"]`).length === 0) {
       $('#gantt-queues').append(`
-        <div class="queue-centro" data-centro-queue="${centro}" style="min-width: 140px; margin-bottom:16px; background: #f2f6fa; border-radius: 6px; border: 1px solid #b3c9e2; padding: 4px 0 7px 0; min-height: 80px; box-sizing: border-box; box-shadow: 1px 2px 5px #0002;">
+        <div class="queue-centro" data-centro-queue="${centro.wc}" style="min-width: 140px; margin-bottom:16px; background: #f2f6fa; border-radius: 6px; border: 1px solid #b3c9e2; padding: 4px 0 7px 0; min-height: 80px; box-sizing: border-box; box-shadow: 1px 2px 5px #0002;">
           <div class="queue-title" style="font-size: 12px; text-align: center; margin-bottom: 4px; color: #444; font-weight: bold; letter-spacing: 1px;">Queue ${centro.wc}-${centro.wc_name}</div>
           <div class="queue-list" style="display:flex; flex-direction:column; gap:8px; align-items:stretch; padding:2px 4px;"></div>
         </div>
