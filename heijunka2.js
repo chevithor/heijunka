@@ -47,7 +47,7 @@ function sumarMinutos(fechaStr, minutos) {
 
 // Crea la estructura visual de cada centro y su timeline SOLAMENTE (no queue aquí)
 function crearCentro(centroObj) {
-  const nombre = centroObj.nombre;
+  const nombre = centroObj.wc_name;
   const wc = centroObj.wc;
   const div = $(`
     <div class="centro" data-centro="${wc}" style="margin-bottom:32px;">
