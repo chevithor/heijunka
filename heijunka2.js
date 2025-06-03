@@ -17,7 +17,9 @@ const TIMELINE_WIDTH = HOURS * 60 * PX_PER_MIN;
 const partes = {
   'PZA-A': { color: '#E74C3C', receta: ['WC7411', 'WC7416'] },
   'PZA-B': { color: '#3498DB', receta: ['WC7412', 'WC7417'] },
-  'PZA-C': { color: '#2ECC71', receta: ['WC7414', 'WC7414'] }
+  'PZA-C': { color: '#2ECC71', receta: ['WC7414', 'WC7414'] },
+  'PZA-D': { color: '#F1C40F', receta: ['WC7413', 'WC7415'] },
+  'PZA-E': { color: '#8E44AD', receta: ['WC7457', 'WC7412'] }
 };
 
 const ordenes = [
@@ -32,25 +34,59 @@ const ordenes = [
   { id: 1003, parte: 'PZA-C', cantidad: 1400, operaciones: [
     { centro: 'WC7414', duracion: 45 },
     { centro: 'WC7414', duracion: 180 }
+  ]},
+  { id: 1004, parte: 'PZA-D', cantidad: 600, operaciones: [
+    { centro: 'WC7413', duracion: 55 },
+    { centro: 'WC7415', duracion: 120 }
+  ]},
+  { id: 1005, parte: 'PZA-E', cantidad: 350, operaciones: [
+    { centro: 'WC7457', duracion: 75 },
+    { centro: 'WC7412', duracion: 90 }
+  ]},
+  { id: 1006, parte: 'PZA-A', cantidad: 240, operaciones: [
+    { centro: 'WC7411', duracion: 70 },
+    { centro: 'WC7416', duracion: 180 }
+  ]},
+  { id: 1007, parte: 'PZA-B', cantidad: 900, operaciones: [
+    { centro: 'WC7412', duracion: 65 },
+    { centro: 'WC7417', duracion: 110 }
+  ]},
+  { id: 1008, parte: 'PZA-C', cantidad: 800, operaciones: [
+    { centro: 'WC7414', duracion: 60 },
+    { centro: 'WC7414', duracion: 150 }
+  ]},
+  { id: 1009, parte: 'PZA-D', cantidad: 1200, operaciones: [
+    { centro: 'WC7413', duracion: 80 },
+    { centro: 'WC7415', duracion: 95 }
+  ]},
+  { id: 1010, parte: 'PZA-E', cantidad: 450, operaciones: [
+    { centro: 'WC7457', duracion: 90 },
+    { centro: 'WC7412', duracion: 105 }
   ]}
 ];
 
 const asignadas = new Set();
 
 function minutosDesdeInicio(fechaStr) {
-  if(!fechaStr) return 0;
   const fecha = new Date(fechaStr);
   return (fecha - START_TIME) / 60000;
 }
 
-// Busca la operación en la orden según id, centro y posición en receta
+function sumarMinutos(fechaStr, minutos) {
+  const fecha = new Date(fechaStr);
+  return new Date(fecha.getTime() + minutos * 60000).toISOString();
+}
+
+// Busca la operación correcta en la receta aunque haya repetidos
 function findOperacion(ordenId, centro, recetaIndex) {
   for (const orden of ordenes) {
     if (orden.id === ordenId) {
+      // Contar ocurrencias en receta
       let countInReceta = 0;
       for (let i = 0; i <= recetaIndex; i++) {
         if (partes[orden.parte].receta[i] === centro) countInReceta++;
       }
+      // Buscar esa ocurrencia en operaciones
       let countInOps = 0;
       for (let i = 0; i < orden.operaciones.length; i++) {
         if (orden.operaciones[i].centro === centro) {
@@ -63,54 +99,22 @@ function findOperacion(ordenId, centro, recetaIndex) {
   return null;
 }
 
-function crearCentro(centroObj) {
-  const wc = centroObj.wc;
-  const nombre = centroObj.nombre;
+function crearCentro(nombre) {
   const div = $(`
-    <div class="centro" data-centro="${wc}">
-      <div class="centro-label">${wc} - ${nombre}</div>
-      <div class="centro-flex">
-        <div class="queue-centro" data-centro-queue="${wc}">
-          <div class="queue-title">Queue ${wc} - ${nombre}</div>
-          <div class="queue-list"></div>
-        </div>
-        <div class="timeline"></div>
+    <div class="centro" data-centro="${nombre}" style="margin-bottom:32px;">
+      <div class="centro-label">${nombre} 
+      <div class="timeline" style="position: relative; height: 100px; background: #f8f8f8; margin-bottom: 10px;"></div>
       </div>
     </div>
   `);
   $('#gantt-timelines').append(div);
 
   const lineaTiempo = div.find('.timeline');
-  lineaTiempo.css({
-    width: TIMELINE_WIDTH + 'px',
-    minWidth: TIMELINE_WIDTH + 'px',
-    maxWidth: TIMELINE_WIDTH + 'px',
-    height: '100px',
-    background: '#f8f8f8',
-    border: '1px solid #eee',
-    position: 'relative',
-    marginBottom: '10px',
-    boxSizing: 'content-box',
-    overflow: 'auto'
-  });
-
-  // Vertical hour lines and hour labels
-  for (let h = 0; h < HOURS; h++) {
-    const left = h * 60 * PX_PER_MIN;
-    // Draw vertical line
-    lineaTiempo.append(`<div class="hora-vline" style="
-      position:absolute;
-      top:0;
-      left:${left}px;
-      width:1px;
-      height:100%;
-      background:#ccc;
-      z-index:0;
-      "></div>`);
-    // Draw hour label
+  for (let h = 0; h < 24; h++) {
     const hora = new Date(START_TIME.getTime() + h * 60 * 60000);
+    const left = h * 60 * PX_PER_MIN;
     const label = hora.getHours().toString().padStart(2, '0') + ':' + hora.getMinutes().toString().padStart(2, '0');
-    lineaTiempo.append('<div class="hora" style="left:' + left + 'px; top:0; z-index:2; background:#f8f8f8cc; padding:0 2px; position:absolute;">' + label + '</div>');
+    lineaTiempo.append('<div class="hora" style="position: absolute; top: 0; left: ' + left + 'px; font-size:11px; color:#bbb;">' + label + '</div>');
   }
 
   lineaTiempo.droppable({
@@ -129,10 +133,11 @@ function crearCentro(centroObj) {
       const centro = $(this).closest('.centro').data('centro');
       const receta = partes[op.parte].receta;
 
-      // Encontrar el índice correcto en la receta para este op
+      // Encontrar recetaIndex correcto (para soportar centros repetidos en receta)
       let recetaIndex = 0, count = 0;
       for (let i = 0; i < receta.length; i++) {
         if (receta[i] === op.centro) {
+          // Buscar la ocurrencia de operaciones
           if (ordenes.find(o => o.id === op.id).operaciones.indexOf(op) === count) {
             recetaIndex = i; break;
           }
@@ -257,9 +262,9 @@ function programarSiguientes(op, recetaIndex) {
     const nextOp = findOperacion(op.id, nextCentro, i);
     if (!nextOp) break;
     const prevStart = new Date(prevOp.horaInicio);
-    const minStart = new Date(prevStart.getTime() + GAP_MINUTES * 60000);
+    const minStart = new Date(prevStart.getTime() + prevOp.duracion * 60000);
 
-    // Buscar traslapes igual que en el drop
+    // Ajuste por traslape igual que en el drop
     let nuevaHoraInicio = minStart;
     let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
     let traslapes = [];
@@ -284,7 +289,7 @@ function programarSiguientes(op, recetaIndex) {
     nextOp.horaInicio = nuevaHoraInicio.toISOString();
     asignadas.add(nextOp.id + '-' + nextOp.centro + '-' + i);
 
-    let centroDiv = $(`[data-centro="${nextCentro}"] .timeline`);
+    const centroDiv = $(`[data-centro="${nextCentro}"] .timeline`);
     centroDiv.find('.op').each(function() {
       const dataOp = $(this).data('op');
       if (
@@ -302,6 +307,10 @@ function programarSiguientes(op, recetaIndex) {
 }
 
 function crearOperacion(op, isQueue = false, inGantt = false) {
+  if (!op.parte || !partes[op.parte]) {
+    console.error("Error: operación sin 'parte' válida", op);
+    return $('<div></div>');
+  }
   const color = partes[op.parte].color;
   const width = op.duracion * PX_PER_MIN;
   const horaTooltip = op.horaInicio ? 'Inicio: ' + new Date(op.horaInicio).toLocaleTimeString() : '';
@@ -310,23 +319,40 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
                     'Pza: ' + op.parte + '<br>' +
                     'Qty: ' + op.cantidad +
                     '</div>';
+
   const $div = $(contenido);
+
   if (isQueue) {
-    $div.css({ backgroundColor: color, opacity: 0.5, marginBottom: '8px', position: 'static', width: width + 'px' });
+    $div.css({
+      backgroundColor: color,
+      opacity: 0.5,
+      marginBottom: '8px',
+      position: 'static',
+      width: width + 'px',
+    });
   } else {
-    $div.css({ backgroundColor: color, width: width + 'px', opacity: 1, left: op.horaInicio ? (minutosDesdeInicio(op.horaInicio) * PX_PER_MIN) + 'px' : 0, position: 'absolute' });
+    $div.css({
+      backgroundColor: color,
+      width: width + 'px',
+      opacity: 1,
+      left: op.horaInicio ? (minutosDesdeInicio(op.horaInicio) * PX_PER_MIN) + 'px' : 0,
+      position: 'absolute',
+    });
   }
   $div.data('op', op);
+
   $div.draggable({
     helper: 'clone',
+    zIndex: 1000,
     appendTo: 'body',
     revert: 'invalid',
-    zIndex: 1000,
     start: function(e, ui) {
+      $(ui.helper).css('opacity', 0.7);
+      $(ui.helper).addClass('op');
       $(ui.helper).data('op', op);
-      $(ui.helper).addClass('op').css('opacity', 0.7);
     }
   });
+
   return $div;
 }
 
@@ -335,7 +361,10 @@ function cargarOrdenes() {
   for (const orden of ordenes) {
     for (let i = 0; i < orden.operaciones.length; i++) {
       const op = orden.operaciones[i];
-      op.id = orden.id; op.parte = orden.parte; op.cantidad = orden.cantidad; delete op.horaInicio;
+      op.id = orden.id;
+      op.parte = orden.parte;
+      op.cantidad = orden.cantidad;
+      delete op.horaInicio;
     }
     const primerOp = orden.operaciones[0];
     const id = primerOp.id + '-' + primerOp.centro + '-0';
@@ -354,6 +383,19 @@ function cargarOrdenes() {
 }
 
 $(function() {
+  if ($('#gantt-main').length === 0) {
+    $('body').append('<div id="gantt-main" style="display: flex; align-items: flex-start; gap: 32px;"><div id="gantt-queues"></div><div id="gantt-timelines" style="flex:1"></div></div>');
+  }
+  for (const centro of CENTROS) {
+    if ($(`[data-centro-queue="${centro}"]`).length === 0) {
+      $('#gantt-queues').append(`
+        <div class="queue-centro" data-centro-queue="${centro}" style="min-width: 140px; margin-bottom:16px; background: #f2f6fa; border-radius: 6px; border: 1px solid #b3c9e2; padding: 4px 0 7px 0; min-height: 80px; box-sizing: border-box; box-shadow: 1px 2px 5px #0002;">
+          <div class="queue-title" style="font-size: 12px; text-align: center; margin-bottom: 4px; color: #444; font-weight: bold; letter-spacing: 1px;">Queue ${centro}</div>
+          <div class="queue-list" style="display:flex; flex-direction:column; gap:8px; align-items:stretch; padding:2px 4px;"></div>
+        </div>
+      `);
+    }
+  }
   CENTROS.forEach(crearCentro);
   cargarOrdenes();
 });
