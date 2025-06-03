@@ -1,40 +1,36 @@
-const CENTROS = ['Corte', 'Soldadura', 'Pintura'];
+const CENTROS = [
+  { wc: '7411', nombre: 'SMT Line_1: 1 Module single Reel' },
+  { wc: '7412', nombre: 'SMT Line_2: 3 Module single Reel' },
+  { wc: '7413', nombre: 'SMT Line_3: 1 Module Dual  Reel' },
+  { wc: '7414', nombre: 'SMT Line_4: 4 Modules Dual  Reel' },
+  { wc: '7415', nombre: 'SMT Line_5: 3 Modules Dual  Reel' },
+  { wc: '7416', nombre: 'SMT Line_6: 3 Modules Dual  Reel' },
+  { wc: '7417', nombre: 'SMT Line_7: 3 Modules  single Reel' },
+  { wc: '7457', nombre: 'SMT Line_8: 3 Modules  single Reel' }
+];
 const START_TIME = new Date('2024-01-01T06:30:00');
 const PX_PER_MIN = 1;
 const GAP_MINUTES = 15;
 
+// Las recetas deben usarse con los WC (códigos) como nombres de centro de trabajo
 const partes = {
-  'PZA-A': { color: '#E74C3C', receta: ['Corte', 'Soldadura', 'Pintura'] },
-  'PZA-B': { color: '#3498DB', receta: ['Corte', 'Pintura'] },
-  'PZA-C': { color: '#2ECC71', receta: ['Corte', 'Soldadura'] }
+  'PZA-A': { color: '#E74C3C', receta: ['7411', '7416'] },
+  'PZA-B': { color: '#3498DB', receta: ['7412', '7417'] },
+  'PZA-C': { color: '#2ECC71', receta: ['7414', '7414'] }
 };
 
 const ordenes = [
-  { id: 1001, parte: 'PZA-A', cantidad: 10, operaciones: [
-    { centro: 'Corte', duracion: 60, horaInicio: '2024-01-01T06:30:00' },
-    { centro: 'Soldadura', duracion: 45 },
-    { centro: 'Pintura', duracion: 30 }
-  ]} ,
-  { id: 1002, parte: 'PZA-B', cantidad: 8, operaciones: [
-    { centro: 'Corte', duracion: 50, horaInicio: '2024-01-01T08:00:00' },
-    { centro: 'Pintura', duracion: 35 }
+  { id: 1001, parte: 'PZA-A', cantidad: 100, operaciones: [
+    { centro: '7411', duracion: 60, horaInicio: '2024-01-01T06:30:00' },
+    { centro: '7416', duracion: 300 }
   ]},
-  { id: 1003, parte: 'PZA-C', cantidad: 6, operaciones: [
-    { centro: 'Corte', duracion: 55 },
-    { centro: 'Soldadura', duracion: 40 }
+  { id: 1002, parte: 'PZA-B', cantidad: 800, operaciones: [
+    { centro: '7412', duracion: 50 },
+    { centro: '7417', duracion: 135 }
   ]},
-  { id: 1004, parte: 'PZA-B', cantidad: 12, operaciones: [
-    { centro: 'Corte', duracion: 40 },
-    { centro: 'Pintura', duracion: 45 }
-  ]},
-  { id: 1005, parte: 'PZA-A', cantidad: 5, operaciones: [
-    { centro: 'Corte', duracion: 50 },
-    { centro: 'Soldadura', duracion: 35 },
-    { centro: 'Pintura', duracion: 25 }
-  ]},
-  { id: 1006, parte: 'PZA-C', cantidad: 7, operaciones: [
-    { centro: 'Corte', duracion: 45 },
-    { centro: 'Soldadura', duracion: 40 }
+  { id: 1003, parte: 'PZA-C', cantidad: 1400, operaciones: [
+    { centro: '7414', duracion: 45 },
+    { centro: '7414', duracion: 180 }
   ]}
 ];
 
