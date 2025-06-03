@@ -42,8 +42,8 @@ function minutosDesdeInicio(fechaStr) {
 }
 
 function crearCentro(centroObj) {
-  const nombre = centroObj.nombre;
   const wc = centroObj.wc;
+  const nombre = centroObj.nombre;
   const div = $(`
     <div class="centro" data-centro="${wc}" style="margin-bottom:32px;">
       <div class="centro-label">${wc} - ${nombre}</div>
@@ -68,6 +68,7 @@ function crearCentro(centroObj) {
       if (!op) { alert('Error interno: operación no encontrada.'); return; }
       const centro = $(this).closest('.centro').data('centro');
       if (op.centro !== centro) return;
+
       // Programa al inicio donde lo suelta
       const left = event.pageX - $(this).offset().left;
       const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
@@ -108,7 +109,10 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
     appendTo: 'body',
     revert: 'invalid',
     zIndex: 1000,
-    start: function(e, ui) { $(ui.helper).data('op', op); $(ui.helper).addClass('op').css('opacity', 0.7); }
+    start: function(e, ui) { 
+      $(ui.helper).data('op', op); 
+      $(ui.helper).addClass('op').css('opacity', 0.7); 
+    }
   });
   return $div;
 }
