@@ -11,6 +11,8 @@ const CENTROS = [
 const START_TIME = new Date('2024-01-01T06:30:00');
 const PX_PER_MIN = 2;
 const GAP_MINUTES = 15;
+const HOURS = 24;
+const TIMELINE_WIDTH = HOURS * 60 * PX_PER_MIN;
 
 const partes = {
   'PZA-A': { color: '#E74C3C', receta: ['WC7411', 'WC7416'] },
@@ -45,12 +47,10 @@ function minutosDesdeInicio(fechaStr) {
 function findOperacion(ordenId, centro, recetaIndex) {
   for (const orden of ordenes) {
     if (orden.id === ordenId) {
-      // Contar cuántas veces aparece el centro en la receta antes de recetaIndex
       let countInReceta = 0;
       for (let i = 0; i <= recetaIndex; i++) {
         if (partes[orden.parte].receta[i] === centro) countInReceta++;
       }
-      // Buscar la aparición N°countInReceta de ese centro
       let countInOps = 0;
       for (let i = 0; i < orden.operaciones.length; i++) {
         if (orden.operaciones[i].centro === centro) {
@@ -81,11 +81,36 @@ function crearCentro(centroObj) {
   $('#gantt-timelines').append(div);
 
   const lineaTiempo = div.find('.timeline');
-  for (let h = 0; h < 24; h++) {
-    const hora = new Date(START_TIME.getTime() + h * 60 * 60000);
+  lineaTiempo.css({
+    width: TIMELINE_WIDTH + 'px',
+    minWidth: TIMELINE_WIDTH + 'px',
+    maxWidth: TIMELINE_WIDTH + 'px',
+    height: '100px',
+    background: '#f8f8f8',
+    border: '1px solid #eee',
+    position: 'relative',
+    marginBottom: '10px',
+    boxSizing: 'content-box',
+    overflow: 'auto'
+  });
+
+  // Vertical hour lines and hour labels
+  for (let h = 0; h < HOURS; h++) {
     const left = h * 60 * PX_PER_MIN;
+    // Draw vertical line
+    lineaTiempo.append(`<div class="hora-vline" style="
+      position:absolute;
+      top:0;
+      left:${left}px;
+      width:1px;
+      height:100%;
+      background:#ccc;
+      z-index:0;
+      "></div>`);
+    // Draw hour label
+    const hora = new Date(START_TIME.getTime() + h * 60 * 60000);
     const label = hora.getHours().toString().padStart(2, '0') + ':' + hora.getMinutes().toString().padStart(2, '0');
-    lineaTiempo.append('<div class="hora" style="left:' + left + 'px;">' + label + '</div>');
+    lineaTiempo.append('<div class="hora" style="left:' + left + 'px; top:0; z-index:2; background:#f8f8f8cc; padding:0 2px; position:absolute;">' + label + '</div>');
   }
 
   lineaTiempo.droppable({
@@ -104,10 +129,7 @@ function crearCentro(centroObj) {
       let count = 0;
       for (let i = 0; i < receta.length; i++) {
         if (receta[i] === op.centro) {
-          // ¿Este op es la N°count+1 aparición?
-          // Usamos la posición en operaciones para identificarla
-          if (ordenes.find(o => o.id === op.id).operaciones.indexOf(op) === count)
-          {
+          if (ordenes.find(o => o.id === op.id).operaciones.indexOf(op) === count) {
             recetaIndex = i; break;
           }
           count++;
@@ -115,51 +137,46 @@ function crearCentro(centroObj) {
       }
 
       let dropDate;
+      const left = event.pageX - $(this).offset().left;
+      let propuestaDropDate = new Date(START_TIME.getTime() + Math.max(0, Math.round(left / PX_PER_MIN)) * 60000);
+
       if (recetaIndex > 0) {
-          const prevCentro = receta[recetaIndex - 1];
-          const prevOp = findOperacion(op.id, prevCentro, recetaIndex-1);
-          if (!prevOp || !prevOp.horaInicio) {
-            alert('Primero debes programar la operación anterior: ' + prevCentro);
-            return;
-          }
-          const prevIni = new Date(prevOp.horaInicio);
-          const prevFin = new Date(prevIni.getTime() + prevOp.duracion * 60000);
-          const minStart = new Date(prevFin.getTime() + GAP_MINUTES * 60000);
-
-          const left = event.pageX - $(this).offset().left;
-          let propuestaDropDate = new Date(START_TIME.getTime() + Math.max(0, Math.round(left / PX_PER_MIN)) * 60000);
-
-          // Si el usuario suelta antes del mínimo, lo movemos al mínimo
-          let nuevaHoraInicio = propuestaDropDate < minStart ? minStart : propuestaDropDate;
-          let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
-
-          // Evita traslapes solo si hay alguno en esa posición
-          let traslapes = [];
-          $(this).find('.op').each(function() {
-            const opExistente = $(this).data('op');
-            if (opExistente && opExistente.id !== op.id) {
-              const ini = new Date(opExistente.horaInicio);
-              const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
-              if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
-                traslapes.push(fin);
-              }
-            }
-          });
-          if (traslapes.length > 0) {
-            // Si hay traslape, lo movemos justo después del último fin
-            const maxFin = new Date(Math.max.apply(null, traslapes));
-            nuevaHoraInicio = maxFin;
-            nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
-          }
-          dropDate = nuevaHoraInicio;
-          op.horaInicio = dropDate.toISOString();
+        const prevCentro = receta[recetaIndex - 1];
+        const prevOp = findOperacion(op.id, prevCentro, recetaIndex-1);
+        if (!prevOp || !prevOp.horaInicio) {
+          alert('Primero debes programar la operación anterior: ' + prevCentro);
+          return;
         }
-      
-      else {
+        const prevIni = new Date(prevOp.horaInicio);
+        const prevFin = new Date(prevIni.getTime() + prevOp.duracion * 60000);
+        const minStart = new Date(prevFin.getTime() + GAP_MINUTES * 60000);
+
+        // Si el usuario suelta antes del mínimo, lo movemos al mínimo
+        let nuevaHoraInicio = propuestaDropDate < minStart ? minStart : propuestaDropDate;
+        let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
+
+        // Evita traslapes solo si hay alguno en esa posición
+        let traslapes = [];
+        $(this).find('.op').each(function() {
+          const opExistente = $(this).data('op');
+          if (opExistente && opExistente.id !== op.id) {
+            const ini = new Date(opExistente.horaInicio);
+            const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
+            if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
+              traslapes.push(fin);
+            }
+          }
+        });
+        if (traslapes.length > 0) {
+          // Si hay traslape, lo movemos justo después del último fin
+          const maxFin = new Date(Math.max.apply(null, traslapes));
+          nuevaHoraInicio = maxFin;
+          nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
+        }
+        dropDate = nuevaHoraInicio;
+        op.horaInicio = dropDate.toISOString();
+      } else {
         // Primera operación: libre, pero evita traslapes
-        const left = event.pageX - $(this).offset().left;
-        const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
-        let propuestaDropDate = new Date(START_TIME.getTime() + dropMin * 60000);
         let nuevaHoraInicio = propuestaDropDate;
         let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
 
@@ -177,6 +194,7 @@ function crearCentro(centroObj) {
         if (traslapes.length > 0) {
           const maxFin = new Date(Math.max.apply(null, traslapes));
           nuevaHoraInicio = maxFin;
+          nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
         }
         dropDate = nuevaHoraInicio;
         op.horaInicio = dropDate.toISOString();
@@ -187,7 +205,6 @@ function crearCentro(centroObj) {
       // Elimina si ya estaba puesta
       $(this).find('.op').each(function() {
         const dataOp = $(this).data('op');
-        // Compara por objeto, id, centro y posición
         if (dataOp && dataOp.id === op.id && dataOp.centro === op.centro && ordenes.find(o => o.id === op.id).operaciones.indexOf(dataOp) === ordenes.find(o => o.id === op.id).operaciones.indexOf(op)) {
           $(this).remove();
         }
@@ -195,7 +212,7 @@ function crearCentro(centroObj) {
 
       ui.draggable.remove();
 
-      const newOpDiv = crearOperacion(op, false, true); // inGantt = true
+      const newOpDiv = crearOperacion(op, false, true);
       $(this).append(newOpDiv);
 
       programarSiguientes(op, recetaIndex);
@@ -203,7 +220,6 @@ function crearCentro(centroObj) {
   });
 }
 
-// Ahora programarSiguientes también usa la posición real en la receta
 function programarSiguientes(op, recetaIndex) {
   const orden = ordenes.find(o => o.id === op.id);
   const receta = partes[op.parte].receta;
@@ -212,12 +228,10 @@ function programarSiguientes(op, recetaIndex) {
     const nextCentro = receta[i];
     const nextOp = findOperacion(op.id, nextCentro, i);
     if (!nextOp) break;
-    // Calcula el inicio: fin anterior + GAP
     const prevStart = new Date(prevOp.horaInicio);
     const prevFin = new Date(prevStart.getTime() + prevOp.duracion * 60000);
     let minStart = new Date(prevFin.getTime() + GAP_MINUTES * 60000);
 
-    // Evita traslapes en este centro
     let nuevaHoraInicio = minStart;
     let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
     let centroDiv = $(`[data-centro="${nextCentro}"] .timeline`);
@@ -239,8 +253,6 @@ function programarSiguientes(op, recetaIndex) {
     }
     nextOp.horaInicio = nuevaHoraInicio.toISOString();
     asignadas.add(nextOp.id + '-' + nextOp.centro + '-' + i);
-
-    // Borra si ya existe
     centroDiv.find('.op').each(function() {
       const dataOp = $(this).data('op');
       if (dataOp && dataOp.id === nextOp.id && dataOp.centro === nextOp.centro && orden.operaciones.indexOf(dataOp) === orden.operaciones.indexOf(nextOp)) {
