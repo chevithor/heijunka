@@ -15,21 +15,25 @@ const GAP_MINUTES = 15;
 // Actualiza tus recetas y órdenes para que usen los códigos WC como centros
 // Por ejemplo:
 const partes = {
-  'PZA-A': { color: '#E74C3C', receta: ['7411', '7412', '7413', '7414', '7415', '7416', '7417', '7457'] },
-  'PZA-B': { color: '#3498DB', receta: ['7411', '7412', '7413', '7414', '7415', '7416', '7417', '7457'] },
-  'PZA-C': { color: '#2ECC71', receta: ['7411', '7412', '7413', '7414', '7415', '7416', '7417', '7457'] }
+  'PZA-A': { color: '#E74C3C', receta: ['7411', '7416'] },
+  'PZA-B': { color: '#3498DB', receta: ['7412', '7417'] },
+  'PZA-C': { color: '#2ECC71', receta: ['7414', '7414'] }
 };
 
 // Actualiza tus órdenes de ejemplo para usar los WC
 const ordenes = [
-  { id: 1001, parte: 'PZA-A', cantidad: 10, operaciones: [
+  { id: 1001, parte: 'PZA-A', cantidad: 100, operaciones: [
     { centro: '7411', duracion: 60, horaInicio: '2024-01-01T06:30:00' },
-    { centro: '7412', duracion: 45 },
-    { centro: '7413', duracion: 30 }
+    { centro: '7416', duracion: 300 }
   ]},
-  { id: 1002, parte: 'PZA-B', cantidad: 8, operaciones: [
-    { centro: '7411', duracion: 50, horaInicio: '2024-01-01T08:00:00' },
-    { centro: '7412', duracion: 35 }
+  { id: 1002, parte: 'PZA-B', cantidad: 800, operaciones: [
+    { centro: '7412', duracion: 50 },
+    { centro: '7417', duracion: 135 }
+  ]},
+
+    { id: 1003, parte: 'PZA-C', cantidad: 1400, operaciones: [
+    { centro: '7414', duracion: 45 },
+    { centro: '7414', duracion: 180 }
   ]},
   // Continúa para tus otras órdenes...
 ];
