@@ -318,10 +318,12 @@ $(function() {
   }
   // Crear los queues a la izquierda
   for (const centro of CENTROS) {
-    if ($(`[data-centro-queue="${centro}"]`).length === 0) {
+    const wc2 = centro.wc;
+    const name2 = centro.nombre;
+    if ($(`[data-centro-queue="${wc2}"]`).length === 0) {
       $('#gantt-queues').append(`
-        <div class="queue-centro" data-centro-queue="${centro}" style="min-width: 140px; margin-bottom:16px; background: #f2f6fa; border-radius: 6px; border: 1px solid #b3c9e2; padding: 4px 0 7px 0; min-height: 80px; box-sizing: border-box; box-shadow: 1px 2px 5px #0002;">
-          <div class="queue-title" style="font-size: 12px; text-align: center; margin-bottom: 4px; color: #444; font-weight: bold; letter-spacing: 1px;">Queue ${centro}</div>
+        <div class="queue-centro" data-centro-queue="${wc2}" style="min-width: 140px; margin-bottom:16px; background: #f2f6fa; border-radius: 6px; border: 1px solid #b3c9e2; padding: 4px 0 7px 0; min-height: 80px; box-sizing: border-box; box-shadow: 1px 2px 5px #0002;">
+          <div class="queue-title" style="font-size: 12px; text-align: center; margin-bottom: 4px; color: #444; font-weight: bold; letter-spacing: 1px;">Queue ${wc2} - ${name2}</div>
           <div class="queue-list" style="display:flex; flex-direction:column; gap:8px; align-items:stretch; padding:2px 4px;"></div>
         </div>
       `);
