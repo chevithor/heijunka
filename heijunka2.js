@@ -167,7 +167,7 @@ function crearCentro(centroObj) {
 
       let dropDate;
       if (recetaIndex > 0) {
-        console.log('RECETA INDEX >0);
+        console.log('RECETA INDEX >0');
         const prevCentro = receta[recetaIndex - 1];
         const prevOp = findOperacion(op.id, prevCentro, recetaIndex-1);
         if (!prevOp || !prevOp.horaInicio) {
