@@ -291,7 +291,7 @@ function programarSiguientes(op, recetaIndex) {
     const nextCentro = receta[i];
     const nextOp = findOperacion(op.id, nextCentro, i);
     
-	console.log('nextCentro: '+ nextCentro+' nextOp: ' + nextOp.centro);
+	// console.log('nextCentro: '+ nextCentro+' nextOp: ' + nextOp.centro);
 	if (!nextOp) break;
 	console.log('sigue dendre de  programarSiguientes  y asigna variables');
     const prevStart = new Date(prevOp.horaInicio);
