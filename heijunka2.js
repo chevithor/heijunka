@@ -167,6 +167,7 @@ function crearCentro(centroObj) {
 
       let dropDate;
       if (recetaIndex > 0) {
+        console.log('RECETA INDEX >0);
         const prevCentro = receta[recetaIndex - 1];
         const prevOp = findOperacion(op.id, prevCentro, recetaIndex-1);
         if (!prevOp || !prevOp.horaInicio) {
@@ -183,7 +184,7 @@ function crearCentro(centroObj) {
         if (propuestaDropDate < minStart) {
           propuestaDropDate = minStart;
         }
-
+        
         // AJUSTE POR TRASLAPE
         let nuevaHoraInicio = propuestaDropDate;
         let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
@@ -214,6 +215,7 @@ function crearCentro(centroObj) {
         dropDate = nuevaHoraInicio;
         op.horaInicio = dropDate.toISOString();
       } else {
+          console.log('WORKING ON ELSE');
         // Primera operación: libre
         const left = event.pageX - $(this).offset().left;
         const dropMin = Math.max(0, Math.round(left / PX_PER_MIN));
@@ -234,6 +236,7 @@ function crearCentro(centroObj) {
             const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
             if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
               traslapes.push(fin);
+              console.log(' (nuevaHoraInicio < fin) && (nuevaHoraFin > ini) nuevaHoraInicio: ' + nuevaHoraInicio   + ' nuevaHoraFin: '+ nuevaHoraFin);
             }
           }
         });
@@ -242,6 +245,7 @@ function crearCentro(centroObj) {
           const maxFin = new Date(Math.max.apply(null, traslapes));
           nuevaHoraInicio = maxFin;
           nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
+          console.log(' (traslapes.length > 0)  nuevaHoraInicio: ' + nuevaHoraInicio   + ' nuevaHoraFin: '+ nuevaHoraFin);
         }
         dropDate = nuevaHoraInicio;
         op.horaInicio = dropDate.toISOString();
