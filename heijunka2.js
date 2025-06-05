@@ -372,12 +372,12 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
   $div.draggable({
     helper: 'clone',
     appendTo: 'body',
-	cursorAt: { left: 0, top: 0 },
+    cursorAt: { left: 0, top: 0 },
     revert: 'invalid',
     zIndex: 1000,
     start: function(e, ui) {
       $(ui.helper).data('op', op);
-      $(ui.helper).addClass('op').css('opacity', 0.7);
+      $(ui.helper).addClass('op').css('opacity': 0.7 , 'width': width +'px');
     }
   });
   return $div;
