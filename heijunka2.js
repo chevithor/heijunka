@@ -295,7 +295,7 @@ function programarSiguientes(op, recetaIndex) {
     
 	//console.log('nextCentro: '+ nextCentro+' nextOp: ' + nextOp.centro);
 	if (!nextOp) break;
-	console.log('sigue dendre de  programarSiguientes  y asigna variables');
+	console.log('sigue dentro de  programarSiguientes  y asigna variables');
     const prevStart = new Date(prevOp.horaInicio);
     const minStart = new Date(prevStart.getTime() + prevOp.duracion * 60000);
 
@@ -308,14 +308,14 @@ function programarSiguientes(op, recetaIndex) {
         opExistente &&
         opExistente.id !== nextOp.id
       ) {
-        console.log();
-		const ini = new Date(opExistente.horaInicio);
+	const ini = new Date(opExistente.horaInicio);
         const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
 		console.log('id: '+ opExistente.id +' ini: ' +ini +' fin: '+fin);
         if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
-          traslapes.push(fin);
+                traslapes.push(fin);
 		  nuevaHoraInicio = new Date(fin); 
 		  nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
+		console.log(' (nuevaHoraInicio < fin) && (nuevaHoraFin > ini) nuevaHoraInicio: ' + nuevaHoraInicio   + ' nuevaHoraFin: '+ nuevaHoraFin);
         }
       }
     });
