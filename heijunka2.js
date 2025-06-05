@@ -295,13 +295,14 @@ function programarSiguientes(op, recetaIndex) {
     
 	//console.log('nextCentro: '+ nextCentro+' nextOp: ' + nextOp.centro);
 	if (!nextOp) break;
-	console.log('sigue dentro de  programarSiguientes  y asigna variables');
+
     const prevStart = new Date(prevOp.horaInicio);
     const minStart = new Date(prevStart.getTime() + prevOp.duracion * 60000);
 
     let nuevaHoraInicio = minStart;
     let nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
-    let traslapes = [];
+	console.log('sigue dentro de  programarSiguientes  y asigna variables // nuevaHoraInicio:'+ nuevaHoraInicio+ ' nuevaHoraFin:'+nuevaHoraFin);
+let traslapes = []; 
     $(`[data-centro="${nextCentro}"] .timeline .op`).each(function() {
       const opExistente = $(this).data('op');
       if (
@@ -310,7 +311,7 @@ function programarSiguientes(op, recetaIndex) {
       ) {
 	const ini = new Date(opExistente.horaInicio);
         const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
-		console.log('id: '+ opExistente.id +' ini: ' +ini +' fin: '+fin);
+	console.log('id: '+ opExistente.id +' ini: ' +ini +' fin: '+fin);
         if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
                 traslapes.push(fin);
 		//  nuevaHoraInicio = new Date(fin); 
