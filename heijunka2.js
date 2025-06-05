@@ -357,13 +357,13 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
   if (isQueue) {
     $div.css({ 
 	    backgroundColor: color,
-	    opacity: 0.85,
+	    opacity: 0.80,
 	    marginBottom: '8px',
 	    position: 'static',
-	    width: '98%', // or use '120px' for fixed width
-	    minWidth: '90px',
-	    maxWidth: '180px',
-	    height: '60px', // match CSS
+	    width: '60px', 
+	    minWidth: '50px',
+	    maxWidth: '60px',
+	    height: '40px', // match CSS
 	    boxShadow: '0 2px 8px #0002' });
   } else {
     $div.css({ backgroundColor: color, width: width + 'px', opacity: 1, left: op.horaInicio ? (minutosDesdeInicio(op.horaInicio) * PX_PER_MIN) + 'px' : 0, position: 'absolute' });
