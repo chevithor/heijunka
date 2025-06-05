@@ -320,10 +320,10 @@ function programarSiguientes(op, recetaIndex) {
       }
     });
     if (traslapes.length > 0) {
-      //const maxFin = new Date(Math.max.apply(null, traslapes));
-	  //nuevaHoraInicio = maxFin;
+        const maxFin = new Date(Math.max.apply(null, traslapes));
+	  nuevaHoraInicio = maxFin;
 	  console.log('programarSiguientes traslapes.length '+ traslapes.length +'> 0 '+ nuevaHoraInicio);
-      //nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
+      nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
     }
     nextOp.horaInicio = nuevaHoraInicio.toISOString();
     asignadas.add(nextOp.id + '-' + nextOp.centro + '-' + i);
