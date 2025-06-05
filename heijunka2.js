@@ -205,6 +205,8 @@ function crearCentro(centroObj) {
             const ini = new Date(opExistente.horaInicio);
             const fin = new Date(ini.getTime() + opExistente.duracion * 60000);
             if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
+	      nuevaHoraInicio= new Date(fin);
+	      nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
               traslapes.push(fin);
               console.log(' (nuevaHoraInicio < fin) && (nuevaHoraFin > ini) nuevaHoraInicio: ' + nuevaHoraInicio   + ' nuevaHoraFin: '+ nuevaHoraFin);
             }
@@ -212,10 +214,9 @@ function crearCentro(centroObj) {
         });
 
         if (traslapes.length > 0) {
-          const maxFin = new Date(Math.max.apply(null, traslapes));
-          nuevaHoraInicio = maxFin;
-          nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
-
+          //const maxFin = new Date(Math.max.apply(null, traslapes));
+          //nuevaHoraInicio = maxFin;
+          //nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + op.duracion * 60000);
           console.log(' (traslapes.length'+ traslapes.length +' > 0)  nuevaHoraInicio: ' + nuevaHoraInicio   + ' nuevaHoraFin: '+ nuevaHoraFin);
         }
         dropDate = nuevaHoraInicio;
