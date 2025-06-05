@@ -13,7 +13,7 @@
       display: flex;
       align-items: flex-start;
     }
-        .timeline {
+     .timeline {
       position: relative;
       flex: 1;
       background: #f8f8f8;
@@ -25,7 +25,9 @@
       margin-bottom: 10px;
     }
     .queue-centro {
-      min-width: 140px;
+      display: flex;
+	  width: 140px;
+	  min-width: 140px;
       margin-right: 16px;
       background: #f2f6fa;
       border: 1px solid #b3c9e2;
@@ -36,55 +38,28 @@
       margin-bottom: 10px;
     }
     .queue-title {
-      font-size: 12px;
+	position:absolute;
+	  font-size: 12px;
       text-align: center;
       margin-bottom: 4px;
       color: #444;
       font-weight: bold;
       letter-spacing: 1px;
+	  background: #f2f6fa;
     }
-   .queue-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: stretch;
-    padding: 2px 4px;
-    /* Optional: add a subtle background or border if you want the queue-list itself to stand out
-    background: #f9fafe;
-    border-radius: 8px;
-    */
-  }
+    .queue-list {
+        flex: 1 0 0;
+		overflow-x: hidden;
+    }
 
-  .queue-list .op {
-    background: #fff;
-    color: #222;
-    border-radius: 8px;
-    border: 1.5px solid #b3c9e2;
-    box-shadow: 0 2px 8px #0002;
-    font-size: 11px;
-    padding: 8px 6px 8px 8px;
-    margin: 0 2px;
-    cursor: move;
-    text-align: left;
-    height: 60px; /* slightly smaller, adjust as needed */
-    min-width: 90px; /* Ensures looks like a card, not a bar */
-    max-width: 180px;
-    transition: box-shadow 0.2s;
-    position: static !important; /* Ensures in queue-list it's not absolute */
-    opacity: 0.96;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  .queue-list .op:hover, .queue-list .op:active {
-    box-shadow: 0 4px 12px #0003;
-    z-index: 2;
-  }
-  .queue-list .op strong { font-size: 12px; }
-
-
+.queue-list:last-child {
+  flex: 1 0 auto;
+}
+	
+	
     .op {
       color: #222;
+	  box-sizing: border-box;
       border-radius: 5px;
       border: 1px solid #bbb;
       box-shadow: 1px 2px 4px #0001;
@@ -104,14 +79,27 @@
     }
   </style>
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
 </head>
 <body>
   <h2>Gantt SMT</h2>
   <div id="gantt-main">
     <div id="gantt-timelines"></div>
   </div>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-  <script src="heijunka2.js"></script>
+
+   <script src="heijunka2.js"></script>
+ <script>
+$(function() {
+    $( document ).tooltip({
+      content:function(){
+        return this.getAttribute("title");
+      }
+    });
+  });
+  </script>
+
+
 </body>
 </html>
