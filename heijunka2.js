@@ -36,7 +36,7 @@ const ordenes = [
     { centro: 'WC7414', duracion: 180 }
   ]},
   { id: 1004, parte: 'PZA-D', cantidad: 600, operaciones: [
-    { centro: 'WC7413', duracion: 30 },
+    { centro: 'WC7413', duracion: 30, horaInicio: '2024-01-01T12:30:00' },
     { centro: 'WC7415', duracion: 60 },
 	{ centro: 'WC7416', duracion: 120 }
   ]},
@@ -57,11 +57,12 @@ const ordenes = [
     { centro: 'WC7414', duracion: 150 }
   ]},
   { id: 1009, parte: 'PZA-D', cantidad: 1200, operaciones: [
-    { centro: 'WC7413', duracion: 80 },
-    { centro: 'WC7415', duracion: 95 }
+    { centro: 'WC7413', duracion: 0, horaInicio: '2024-01-01T08:30:00'},
+	{ centro: 'WC7415', duracion: 80, horaInicio: '2024-01-01T08:30:00' },
+    { centro: 'WC7416', duracion: 95 }
   ]},
   { id: 1010, parte: 'PZA-E', cantidad: 450, operaciones: [
-    { centro: 'WC7457', duracion: 90 },
+    { centro: 'WC7457', duracion: 90,  horaInicio: '2024-01-01T16:30:00' },
     { centro: 'WC7412', duracion: 105 }
   ]}
 ];
@@ -117,7 +118,7 @@ function crearCentro(centroObj) {
 	width: TIMELINE_WIDTH + 'px',
 	minWidth: TIMELINE_WIDTH + 'px',
 	maxWidth: TIMELINE_WIDTH + 'px',
-	overflow: 'auto'
+	//overflow: 'auto'
   });
 
   // Vertical hour lines and hour labels
@@ -283,7 +284,7 @@ function crearCentro(centroObj) {
 
 function programarSiguientes(op, recetaIndex) {
 
-	console.log('entrando a programarSiguientes recetaIndex '+ recetaIndex );
+	console.log('id: '+ op.id +' entrando a programarSiguientes recetaIndex '+ recetaIndex );
   const orden = ordenes.find(o => o.id === op.id);
   const receta = partes[op.parte].receta;
   let prevOp = op;
@@ -291,7 +292,7 @@ function programarSiguientes(op, recetaIndex) {
     const nextCentro = receta[i];
     const nextOp = findOperacion(op.id, nextCentro, i);
     
-	// console.log('nextCentro: '+ nextCentro+' nextOp: ' + nextOp.centro);
+	//console.log('nextCentro: '+ nextCentro+' nextOp: ' + nextOp.centro);
 	if (!nextOp) break;
 	console.log('sigue dendre de  programarSiguientes  y asigna variables');
     const prevStart = new Date(prevOp.horaInicio);
@@ -312,14 +313,16 @@ function programarSiguientes(op, recetaIndex) {
 		console.log('id: '+ opExistente.id +' ini: ' +ini +' fin: '+fin);
         if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
           traslapes.push(fin);
+		  nuevaHoraInicio = new Date(fin); 
+		  nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
         }
       }
     });
     if (traslapes.length > 0) {
-      const maxFin = new Date(Math.max.apply(null, traslapes));
-	  nuevaHoraInicio = maxFin;
+      //const maxFin = new Date(Math.max.apply(null, traslapes));
+	  //nuevaHoraInicio = maxFin;
 	  console.log('programarSiguientes traslapes.length '+ traslapes.length +'> 0 '+ nuevaHoraInicio);
-      nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
+      //nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
     }
     nextOp.horaInicio = nuevaHoraInicio.toISOString();
     asignadas.add(nextOp.id + '-' + nextOp.centro + '-' + i);
@@ -360,6 +363,7 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
   $div.draggable({
     helper: 'clone',
     appendTo: 'body',
+	cursorAt: { left: 0, top: 0 },
     revert: 'invalid',
     zIndex: 1000,
     start: function(e, ui) {
@@ -378,21 +382,26 @@ function cargarOrdenes() {
       op.id = orden.id;
       op.parte = orden.parte;
       op.cantidad = orden.cantidad;
-      delete op.horaInicio;
+	  //op.horaInicio = orden.operaciones[i].horaInicio;
+     // delete op.horaInicio;
     }
     const primerOp = orden.operaciones[0];
     const id = primerOp.id + '-' + primerOp.centro + '-0';
-    if (!asignadas.has(id)) {
-      const queueList = $(`[data-centro-queue="${primerOp.centro}"] .queue-list`);
-      queueList.append(crearOperacion(primerOp, true));
-    }
+
     for (let i = 0; i < orden.operaciones.length; i++) {
       const op = orden.operaciones[i];
       if (op.horaInicio) {
         asignadas.add(op.id + '-' + op.centro + '-' + i);
         $(`[data-centro="${op.centro}"] .timeline`).append(crearOperacion(op, false, true));
+		programarSiguientes(op,i);
       }
     }
+	
+	  if (!asignadas.has(id)) {
+      const queueList = $(`[data-centro-queue="${primerOp.centro}"] .queue-list`);
+      queueList.append(crearOperacion(primerOp, true));
+    }
+	
   }
 }
 
