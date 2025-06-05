@@ -377,7 +377,7 @@ function crearOperacion(op, isQueue = false, inGantt = false) {
     zIndex: 1000,
     start: function(e, ui) {
       $(ui.helper).data('op', op);
-      $(ui.helper).addClass('op').css('opacity': 0.7 , 'width': width +'px');
+      $(ui.helper).addClass('op').css({'opacity': 0.7 , 'width': width +'px'});
     }
   });
   return $div;
