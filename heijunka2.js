@@ -313,8 +313,8 @@ function programarSiguientes(op, recetaIndex) {
 		console.log('id: '+ opExistente.id +' ini: ' +ini +' fin: '+fin);
         if ((nuevaHoraInicio < fin) && (nuevaHoraFin > ini)) {
                 traslapes.push(fin);
-		  nuevaHoraInicio = new Date(fin); 
-		  nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
+		//  nuevaHoraInicio = new Date(fin); 
+		//  nuevaHoraFin = new Date(nuevaHoraInicio.getTime() + nextOp.duracion * 60000);
 		console.log(' (nuevaHoraInicio < fin) && (nuevaHoraFin > ini) nuevaHoraInicio: ' + nuevaHoraInicio   + ' nuevaHoraFin: '+ nuevaHoraFin);
         }
       }
