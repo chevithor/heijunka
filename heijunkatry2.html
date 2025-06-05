@@ -43,13 +43,45 @@
       font-weight: bold;
       letter-spacing: 1px;
     }
-    .queue-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      align-items: stretch;
-      padding: 2px 4px;
-    }
+   .queue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+    padding: 2px 4px;
+    /* Optional: add a subtle background or border if you want the queue-list itself to stand out
+    background: #f9fafe;
+    border-radius: 8px;
+    */
+  }
+
+  .queue-list .op {
+    background: #fff;
+    color: #222;
+    border-radius: 8px;
+    border: 1.5px solid #b3c9e2;
+    box-shadow: 0 2px 8px #0002;
+    font-size: 11px;
+    padding: 8px 6px 8px 8px;
+    margin: 0 2px;
+    cursor: move;
+    text-align: left;
+    height: 60px; /* slightly smaller, adjust as needed */
+    min-width: 90px; /* Ensures looks like a card, not a bar */
+    max-width: 180px;
+    transition: box-shadow 0.2s;
+    position: static !important; /* Ensures in queue-list it's not absolute */
+    opacity: 0.96;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .queue-list .op:hover, .queue-list .op:active {
+    box-shadow: 0 4px 12px #0003;
+    z-index: 2;
+  }
+  .queue-list .op strong { font-size: 12px; }
+
 
     .op {
       color: #222;
