@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <title>SMT Gantt Board</title>
   <style>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>SMT Gantt Board</title>
+  <style>
     body { font-family: Arial, sans-serif; }
     #gantt-main { display: flex; align-items: flex-start; gap: 15px; }
     #gantt-timelines { flex: 1; }
@@ -25,6 +30,7 @@
       margin-bottom: 10px;
     }
     .queue-centro {
+	 position: relative;
       display: flex;
 	  width: 140px;
 	  min-width: 140px;
@@ -38,16 +44,25 @@
       margin-bottom: 10px;
     }
     .queue-title {
-	position:absolute;
-	  font-size: 12px;
+	position: absolute;
+      font-size: 12px;
       text-align: center;
       margin-bottom: 4px;
       color: #444;
       font-weight: bold;
       letter-spacing: 1px;
-	  background: #f2f6fa;
+      background: #7eaac0;
+      top: 0;
+      left: 0;
+	  height: 15px;
+      width: 100%;
+      z-index: 10;
+      opacity: 1; /* Not translucent */
     }
     .queue-list {
+		top: 10px;
+		height: 90px;
+		position: relative;
         flex: 1 0 0;
 		overflow-x: hidden;
     }
