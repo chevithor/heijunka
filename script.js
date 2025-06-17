@@ -1,4 +1,3 @@
-
 const centros = ['wc1','wc2','wc3','wc4','wc5','wc6','wc7','wc8'];
 const cargaCentro = {};
 const agenda = {};
