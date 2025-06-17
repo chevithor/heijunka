@@ -136,8 +136,8 @@ const ordenes = [
     programa: 'ProgX',
     pcb_panel: 4,
     operaciones: [
-      { op: 'P&P', wc: 'wc1', duracion: 12, qty: 200, remaining_qty: 200 },
-      { op: 'AOI', wc: 'wc4', duracion: 8, qty: 200, remaining_qty: 200 }
+      { op: 'P&P', wc: 'wc1', duracion: 25, qty: 200, remaining_qty: 200 },
+      { op: 'AOI', wc: 'wc4', duracion: 20, qty: 200, remaining_qty: 200 }
     ]
   },
   {
@@ -146,8 +146,8 @@ const ordenes = [
     programa: 'ProgY',
     pcb_panel: 2,
     operaciones: [
-      { op: 'P&P', wc: 'wc2', duracion: 10, qty: 100, remaining_qty: 100 },
-      { op: 'AOI', wc: 'wc4', duracion: 6, qty: 100, remaining_qty: 100 }
+      { op: 'P&P', wc: 'wc2', duracion: 20, qty: 100, remaining_qty: 100 },
+      { op: 'AOI', wc: 'wc4', duracion: 20, qty: 100, remaining_qty: 100 }
     ]
   }
 ];
