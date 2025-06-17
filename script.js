@@ -50,7 +50,7 @@ function nivelar(ordenes) {
       const card = document.createElement('div');
       card.className = 'card';
       card.innerText = `${orden.material}\n${op.op}`;
-      card.style.top = `${top}px';
+      card.style.top = `${top}px`;
       card.style.background = getColor(orden.material);
       card.setAttribute('draggable', true);
 
